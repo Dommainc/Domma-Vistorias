@@ -1,0 +1,1 @@
+ALTER TABLE unidades ALTER COLUMN status SET DEFAULT 'aguardando_liberacao';
