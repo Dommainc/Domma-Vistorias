@@ -7,6 +7,7 @@ import {
   UserCog,
   LogOut,
   Settings,
+  Map,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -30,6 +31,7 @@ const adminItems = [
   { title: "Unidades", url: "/unidades", icon: DoorOpen },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Agendamentos", url: "/agendamentos", icon: CalendarDays },
+  { title: "Mapa", url: "/empreendimentos", icon: Map },
   { title: "Usuários", url: "/usuarios", icon: UserCog },
   { title: "Configurações", url: "/configuracoes/agendamentos", icon: Settings },
 ];

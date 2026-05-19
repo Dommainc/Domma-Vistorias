@@ -1,4 +1,4 @@
-import { Building2, Plus, Pencil, Trash2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -122,6 +122,9 @@ export default function Empreendimentos() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" title="Mapa de Disponibilidade" onClick={() => navigate(`/mapa/${emp.id}`)}>
+                          <Map className="h-4 w-4 text-green-700" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => navigate(`/empreendimentos/${emp.id}/editar`)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
