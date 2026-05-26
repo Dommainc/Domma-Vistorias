@@ -25,7 +25,6 @@ import ClienteHome from "@/pages/cliente/ClienteHome";
 import ClienteAgendamento from "@/pages/cliente/ClienteAgendamento";
 import ClienteHistorico from "@/pages/cliente/ClienteHistorico";
 import ClienteUnidade from "@/pages/cliente/ClienteUnidade";
-import MapaDisponibilidade from "@/pages/mapa/MapaDisponibilidade";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,7 +71,6 @@ const App = () => (
               <Route path="/agendamentos" element={<AdminPage><Agendamentos /></AdminPage>} />
               <Route path="/usuarios" element={<AdminPage allowedProfiles={['admin']}><Usuarios /></AdminPage>} />
               <Route path="/configuracoes/agendamentos" element={<AdminPage><ConfiguracoesAgendamento /></AdminPage>} />
-              <Route path="/mapa/:empreendimentoId" element={<AdminPage><MapaDisponibilidade /></AdminPage>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ClienteAuthProvider>

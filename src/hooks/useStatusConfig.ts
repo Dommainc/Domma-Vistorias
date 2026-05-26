@@ -1,4 +1,21 @@
-import type { StatusVistoria, StatusConfig } from '@/types/cvcrm'
+// Status de vistoria — tipos e configurações
+
+export type StatusVistoria =
+  | 'nao_liberada'
+  | 'liberada'
+  | 'agendada'
+  | 'desmarcada'
+  | 'aprovada'
+  | 'reprovada'
+  | 'com_pendencias'
+  | 'cancelada'
+  | 'distrato'
+
+export interface StatusConfig {
+  cor: string
+  textoCor: string
+  label: string
+}
 
 export const STATUS_CONFIG: Record<StatusVistoria, StatusConfig> = {
   nao_liberada:   { cor: '#9E9E9E', textoCor: '#fff', label: 'Não liberada' },
@@ -12,7 +29,6 @@ export const STATUS_CONFIG: Record<StatusVistoria, StatusConfig> = {
   distrato:       { cor: '#6A1B9A', textoCor: '#fff', label: 'Distrato' },
 }
 
-// Status disponíveis para seleção manual no drawer
 export const STATUS_SELECIONAVEIS: StatusVistoria[] = [
   'nao_liberada',
   'liberada',
@@ -34,7 +50,6 @@ export const STATUS_ORDER: StatusVistoria[] = [
   'distrato',
 ]
 
-// Mapear valores legados do Supabase para StatusVistoria
 export function mapSupabaseStatus(status: string | null): StatusVistoria {
   const s = (status ?? '').toLowerCase()
   if (s === 'aguardando_liberacao' || s === 'aguardando liberacao') return 'nao_liberada'

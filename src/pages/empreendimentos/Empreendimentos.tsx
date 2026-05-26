@@ -1,4 +1,4 @@
-import { Building2, Plus, Pencil, Trash2, Map, Search } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -180,15 +180,6 @@ export default function Empreendimentos() {
                     </TableCell>
                     <TableCell className="pr-6">
                       <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/8"
-                          title="Mapa de Disponibilidade"
-                          onClick={() => navigate(`/mapa/${emp.id}`)}
-                        >
-                          <Map className="h-4 w-4" />
-                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
