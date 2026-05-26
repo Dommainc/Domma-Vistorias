@@ -10,6 +10,7 @@ export function normBloco(v: any): string {
 }
 
 function normStatus(s: any): UnidadeStatus {
+  // Remove acentos (ex: "disponível" → "disponivel") antes de comparar
   const v = String(s ?? '').toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
   if (v.includes('dispon'))                        return 'disponivel'
@@ -34,9 +35,18 @@ const toStr = (v: any): string | undefined => {
 export function parseMapa(raw: any, idEmpreendimento: string): MapaEmpreendimento {
   const items: any[] = Array.isArray(raw) ? raw : (raw?.dados ?? [])
   const blocoMap = new Map<string, MapaBloco>()
+  // Deduplicação: o CVCRM às vezes repete os mesmos itens em todas as páginas.
+  // Usamos idunidade como chave primária; como fallback, bloco+unidade.
+  const seenIds = new Set<string>()
   let nomeEmpreendimento = ''
 
   for (const item of items) {
+    // Deduplica por idunidade (ou bloco+unidade se idunidade ausente)
+    const uid = String(item.idunidade ?? '').trim()
+    const dedupeKey = uid || `${item.bloco}::${item.unidade}`
+    if (seenIds.has(dedupeKey)) continue
+    seenIds.add(dedupeKey)
+
     if (!nomeEmpreendimento && item.nome_empreendimento) {
       nomeEmpreendimento = item.nome_empreendimento
     }
@@ -47,9 +57,18 @@ export function parseMapa(raw: any, idEmpreendimento: string): MapaEmpreendiment
     const bloco = normBloco(item.bloco ?? item.nome_bloco ?? item.idbloco ?? item.bl ?? '')
     const key   = `${fase}||${bloco}`
 
+    // Remove prefixo de bloco duplicado do campo unidade.
+    // CVCRM retorna diferentes formatos dependendo do empreendimento:
+    //   "BL 01 - APT 101"  (com espaço antes e depois do hífen)
+    //   "BL 01 - 101"      (mesmo formato)
+    //   "BL 01 -101"       (sem espaço depois do hífen — Prime Caxias, Seleto Inhaúma)
+    // Regex captura todos os casos: prefixo "BL XX" seguido de " -" com qualquer espaçamento.
+    let unidadeStr = String(item.unidade ?? item.idunidade_int ?? item.idunidade ?? '').trim()
+    unidadeStr = unidadeStr.replace(/^BL\s*\d+\s*-\s*/i, '').trim()
+
     const unidade: MapaUnidade = {
       id:      item.idunidade,
-      unidade: String(item.unidade ?? item.idunidade_int ?? item.idunidade ?? '').trim(),
+      unidade: unidadeStr,
       bloco,
       fase,
       status: normStatus(item.situacao ?? item.status ?? item.situacao_unidade ?? item.status_unidade),

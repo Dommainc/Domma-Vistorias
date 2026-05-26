@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { BlocoGrid } from '@/components/mapa/BlocoGrid'
 import { UnidadeSidePanel } from '@/components/mapa/UnidadeSidePanel'
 import { ImportarValoresDialog } from '@/components/mapa/ImportarValoresDialog'
-import { Upload, Loader2, AlertCircle, Search, RefreshCw, Map } from 'lucide-react'
+import { Upload, Loader2, AlertCircle, Search, RefreshCw, Map as MapIcon } from 'lucide-react'
 import { STATUS_BG, STATUS_LABEL, type MapaUnidade } from '@/types/mapa'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
@@ -126,7 +126,7 @@ export default function MapaDisponibilidade() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Map className="h-6 w-6 text-primary" />
+            <MapIcon className="h-6 w-6 text-primary" />
             Mapa de Disponibilidade
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -193,7 +193,7 @@ export default function MapaDisponibilidade() {
       {/* ── Estado vazio */}
       {!selectedId && (
         <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-          <Map className="h-12 w-12 mb-3 opacity-20" />
+          <MapIcon className="h-12 w-12 mb-3 opacity-20" />
           <p className="text-sm">Selecione um empreendimento para carregar o mapa.</p>
         </div>
       )}

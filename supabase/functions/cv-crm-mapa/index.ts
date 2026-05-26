@@ -35,12 +35,17 @@ function getCorsHeaders(origin: string) {
 const cache = new Map<string, { at: number; data: unknown }>();
 const TTL_MS = 60_000;
 
-/** Busca TODAS as páginas da API paginada do CVCRM em paralelo */
+/** Busca TODAS as páginas da API paginada do CVCRM em paralelo.
+ *
+ * ATENÇÃO: o CVCRM usa o parâmetro "pagina" (PT) — não "page" (EN).
+ * Usar "page" faz a API ignorar a paginação e retornar sempre a mesma
+ * primeira página em todos os requests.
+ */
 async function fetchAllPages(baseUrl: string, email: string, token: string): Promise<any[]> {
-  // Página 1 para descobrir total de páginas
-  const res1 = await fetch(`${baseUrl}?page=1`, {
-    headers: { email, token, "email_token": token, accept: "application/json", "Content-Type": "application/json" },
-  });
+  const hdrs = { email, token, "email_token": token, accept: "application/json", "Content-Type": "application/json" };
+
+  // Página 1 para descobrir o total de páginas
+  const res1 = await fetch(`${baseUrl}?pagina=1`, { headers: hdrs });
 
   if (!res1.ok) {
     const body = await res1.text();
@@ -51,17 +56,15 @@ async function fetchAllPages(baseUrl: string, email: string, token: string): Pro
   const dados1: any[] = page1.dados ?? [];
   const totalPaginas: number = page1.paginacao?.total_de_paginas ?? 1;
 
-  console.log(`[cv-crm-mapa] page 1/${totalPaginas} — ${dados1.length} unidades`);
+  console.log(`[cv-crm-mapa] pagina 1/${totalPaginas} — ${dados1.length} unidades (total_registros=${page1.paginacao?.total_de_registros})`);
 
   if (totalPaginas <= 1) return dados1;
 
-  // Restantes em paralelo
-  const pageNums = Array.from({ length: totalPaginas - 1 }, (_, i) => i + 2);
+  // Demais páginas em paralelo (limite de 50 para não sobrecarregar a API)
+  const pageNums = Array.from({ length: Math.min(totalPaginas - 1, 49) }, (_, i) => i + 2);
   const responses = await Promise.all(
     pageNums.map(p =>
-      fetch(`${baseUrl}?page=${p}`, {
-        headers: { email, token, "email_token": token, accept: "application/json", "Content-Type": "application/json" },
-      })
+      fetch(`${baseUrl}?pagina=${p}`, { headers: hdrs })
     )
   );
   const bodies = await Promise.all(
