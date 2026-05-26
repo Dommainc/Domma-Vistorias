@@ -1,0 +1,55 @@
+export type UnidadeStatus =
+  | 'disponivel'
+  | 'reservada'
+  | 'vendida'
+  | 'bloqueada'
+  | 'em_processo'
+  | 'desconhecido';
+
+export interface MapaUnidade {
+  id?: string | number;
+  unidade: string;
+  bloco: string;
+  fase?: string;
+  status: UnidadeStatus;
+  area_total?: number;
+  area_privativa?: number;
+  area_comum?: number;
+  fracao_ideal?: number;
+  vagas?: number;
+  tipo?: string;
+  descricao?: string;
+  raw?: any;
+}
+
+export interface MapaBloco {
+  fase: string;
+  bloco: string;
+  unidades: MapaUnidade[];
+}
+
+export interface MapaEmpreendimento {
+  id_empreendimento: string;
+  nome: string;
+  blocos: MapaBloco[];
+  totais: Record<UnidadeStatus, number> & { total: number };
+}
+
+// Cores exatas do CVCRM
+export const STATUS_BG: Record<UnidadeStatus, string> = {
+  disponivel:  '#43A047',
+  reservada:   '#FB8C00',
+  vendida:     '#E53935',
+  bloqueada:   '#9E9E9E',
+  em_processo: '#1E88E5',
+  desconhecido:'#78909C',
+}
+
+export const STATUS_LABEL: Record<UnidadeStatus, string> = {
+  disponivel:  'Disponível',
+  reservada:   'Reservada',
+  vendida:     'Vendida',
+  bloqueada:   'Bloqueada',
+  em_processo: 'Em Processo',
+  desconhecido:'Desconhecido',
+}
