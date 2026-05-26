@@ -1,4 +1,4 @@
-import { CalendarDays, Users, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { CalendarDays, Users, CheckCircle2, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,73 +74,151 @@ export default function Dashboard() {
   });
 
   const stats = [
-    { label: "Vistorias Hoje", value: String(agendamentosHoje?.length || 0), icon: CalendarDays, color: "text-info" },
-    { label: "Agendamentos Ativos", value: String(pendentes || 0), icon: Clock, color: "text-warning" },
-    { label: "Concluídos no Mês", value: String(concluidosMes || 0), icon: CheckCircle2, color: "text-success" },
-    { label: "Clientes Cadastrados", value: String(totalClientes || 0), icon: Users, color: "text-primary" },
+    {
+      label: "Vistorias Hoje",
+      value: agendamentosHoje?.length ?? 0,
+      icon: CalendarDays,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      accent: "#3B82F6",
+    },
+    {
+      label: "Agendamentos Ativos",
+      value: pendentes ?? 0,
+      icon: Clock,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      accent: "#F59E0B",
+    },
+    {
+      label: "Concluídos no Mês",
+      value: concluidosMes ?? 0,
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      accent: "#10B981",
+    },
+    {
+      label: "Total de Clientes",
+      value: totalClientes ?? 0,
+      icon: Users,
+      iconBg: "bg-violet-50",
+      iconColor: "text-violet-600",
+      accent: "#7C3AED",
+    },
+    {
+      label: "Aguardando Liberação",
+      value: unidadesAguardando ?? 0,
+      icon: Clock,
+      iconBg: "bg-orange-50",
+      iconColor: "text-orange-600",
+      accent: "#EA580C",
+      onClick: () => navigate('/unidades'),
+    },
+  ];
+
+  const quickActions = [
+    { label: "Ver Agendamentos", icon: CalendarDays, path: '/agendamentos' },
+    { label: "Gerenciar Unidades", icon: Clock, path: '/unidades' },
+    { label: "Novo Cliente", icon: Users, path: '/clientes/novo' },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-slide-up">
+      {/* Page heading */}
       <div>
-        <h1 className="font-heading text-2xl font-bold">Home</h1>
-        <p className="text-sm text-muted-foreground">Visão geral do sistema de vistorias</p>
+        <h1 className="font-heading text-2xl font-bold text-foreground">Home</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">Visão geral do sistema de vistorias</p>
       </div>
 
+      {/* Alert banner */}
       {(alertaUnidades || 0) > 0 && (
-        <div className="rounded-lg bg-warning/10 border border-warning/30 p-4 flex items-center gap-3">
-          <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0" />
-          <div>
-            <p className="text-sm font-medium">{alertaUnidades} unidade(s) com cliente vinculado aguardando liberação</p>
-            <p className="text-xs text-muted-foreground">Clientes estão esperando, mas as unidades ainda não foram liberadas.</p>
+        <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100">
+            <AlertTriangle className="h-5 w-5 text-amber-600" />
           </div>
-          <Button size="sm" variant="outline" className="ml-auto" onClick={() => navigate('/unidades')}>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-900">
+              {alertaUnidades} unidade(s) com cliente aguardando liberação
+            </p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Clientes estão esperando, mas as unidades ainda não foram liberadas.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-shrink-0 border-amber-300 text-amber-800 hover:bg-amber-100"
+            onClick={() => navigate('/unidades')}
+          >
             Ver Unidades
+            <ArrowRight className="ml-1 h-3.5 w-3.5" />
           </Button>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stats grid */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {stats.map((stat) => (
-          <Card key={stat.label} className="animate-fade-in">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold font-heading">{stat.value}</div>
+          <Card
+            key={stat.label}
+            className={`stat-card-accent border shadow-sm transition-all duration-200 ${stat.onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''}`}
+            style={{ '--tw-shadow-color': stat.accent } as React.CSSProperties}
+            onClick={stat.onClick}
+          >
+            <div
+              className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+              style={{ background: stat.accent }}
+            />
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground leading-none mb-2">{stat.label}</p>
+                  <p className="font-heading text-3xl font-bold text-foreground">{stat.value}</p>
+                </div>
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${stat.iconBg}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.iconColor}`} />
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
-        <Card className="animate-fade-in cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/unidades')}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Aguardando Liberação</CardTitle>
-            <Clock className="h-5 w-5 text-warning" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold font-heading">{unidadesAguardando || 0}</div>
-          </CardContent>
-        </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Vistorias Hoje</CardTitle></CardHeader>
-          <CardContent>
+      {/* Detail cards */}
+      <div className="grid gap-4 lg:grid-cols-5">
+        {/* Today's schedule */}
+        <Card className="lg:col-span-3 border shadow-sm">
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-primary" />
+              Vistorias Hoje
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
             {!agendamentosHoje?.length ? (
-              <p className="text-sm text-muted-foreground">Nenhuma vistoria agendada para hoje.</p>
+              <div className="flex flex-col items-center justify-center py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-muted mb-3">
+                  <CalendarDays className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Nenhuma vistoria hoje</p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">Aproveite para adiantar outras tarefas!</p>
+              </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {agendamentosHoje.map((a: any) => (
-                  <div key={a.id} className="flex items-center justify-between text-sm border rounded p-2">
-                    <div>
-                      <p className="font-medium">{a.clientes?.nome_completo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {a.unidades?.empreendimentos?.nome} - {a.unidades?.bloco ? a.unidades.bloco + '-' : ''}{a.unidades?.numero}
+                  <div
+                    key={a.id}
+                    className="flex items-center justify-between rounded-lg border bg-card p-3 text-sm hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">{a.clientes?.nome_completo}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {a.unidades?.empreendimentos?.nome} — {a.unidades?.bloco ? a.unidades.bloco + '-' : ''}{a.unidades?.numero}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">{formatTime(a.data_hora)}</p>
+                    <div className="flex-shrink-0 text-right ml-4">
+                      <p className="font-semibold text-foreground">{formatTime(a.data_hora)}</p>
                       <AgendamentoStatusBadge status={a.status} />
                     </div>
                   </div>
@@ -149,18 +227,24 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base">Ações Rápidas</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/agendamentos')}>
-              <CalendarDays className="mr-2 h-4 w-4" /> Ver Agendamentos
-            </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/unidades')}>
-              <Clock className="mr-2 h-4 w-4" /> Gerenciar Unidades
-            </Button>
-            <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/clientes/novo')}>
-              <Users className="mr-2 h-4 w-4" /> Novo Cliente
-            </Button>
+
+        {/* Quick actions */}
+        <Card className="lg:col-span-2 border shadow-sm">
+          <CardHeader className="pb-3 border-b">
+            <CardTitle className="text-base font-semibold">Ações Rápidas</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-2">
+            {quickActions.map(({ label, icon: Icon, path }) => (
+              <button
+                key={label}
+                onClick={() => navigate(path)}
+                className="w-full flex items-center gap-3 rounded-lg border px-4 py-3 text-sm font-medium text-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-200 group"
+              >
+                <Icon className="h-4 w-4 text-primary group-hover:text-white transition-colors flex-shrink-0" />
+                {label}
+                <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground group-hover:text-white/70 transition-colors" />
+              </button>
+            ))}
           </CardContent>
         </Card>
       </div>

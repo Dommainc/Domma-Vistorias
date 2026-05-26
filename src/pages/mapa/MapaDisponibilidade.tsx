@@ -38,6 +38,7 @@ export default function MapaDisponibilidade() {
     data: mapa,
     isLoading,
     isError,
+    error,
     refetch,
     isFetching,
   } = useMapaDisponibilidade(empreendimentoId!, cvcrmId)
@@ -68,6 +69,11 @@ export default function MapaDisponibilidade() {
   if (isError || (empreendimento && !cvcrmId)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center p-6">
+        {error && (
+          <pre className="text-xs bg-gray-100 text-red-700 rounded p-3 max-w-lg text-left overflow-auto">
+            {String((error as Error).message)}
+          </pre>
+        )}
         <AlertTriangle className="h-12 w-12 text-amber-500" />
         <div>
           <p className="font-semibold text-lg">
@@ -161,6 +167,8 @@ export default function MapaDisponibilidade() {
       <DrawerUnidade
         unidade={unidadeSelecionada}
         onClose={() => setUnidadeSelecionada(null)}
+        onStatusChange={() => refetch()}
+        nomeEmpreendimento={mapa.nome || empreendimento?.nome}
       />
     </div>
   )

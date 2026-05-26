@@ -6,51 +6,53 @@
 
 @layer base {
   :root {
-    --background: 210 20% 97%;
-    --foreground: 210 52% 15%;
+    /* Navy blue identity: #1a2744 ≈ hsl(222 45% 18%) */
+    --background: 220 20% 97%;
+    --foreground: 222 45% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 52% 15%;
+    --card-foreground: 222 45% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 52% 15%;
+    --popover-foreground: 222 45% 12%;
 
-    --primary: 210 52% 25%;
+    --primary: 222 52% 18%;       /* #1a2744 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 93%;
-    --secondary-foreground: 210 52% 25%;
+    --secondary: 220 20% 93%;
+    --secondary-foreground: 222 45% 18%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 210 10% 46%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 10% 48%;
 
-    --accent: 25 91% 48%;
+    --accent: 217 91% 60%;        /* bright blue #3B82F6 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 18% 87%;
-    --input: 210 18% 87%;
-    --ring: 210 52% 25%;
+    --border: 220 18% 88%;
+    --input: 220 18% 88%;
+    --ring: 222 52% 18%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 210 52% 20%;
-    --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 210 52% 20%;
-    --sidebar-accent: 210 52% 28%;
+    /* Sidebar — even darker navy */
+    --sidebar-background: 222 58% 12%;   /* #0d1829 */
+    --sidebar-foreground: 220 30% 82%;
+    --sidebar-primary: 217 91% 65%;      /* accent blue for active */
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 45% 20%;       /* hover state */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 40% 30%;
-    --sidebar-ring: 25 91% 48%;
+    --sidebar-border: 222 40% 20%;
+    --sidebar-ring: 217 91% 60%;
 
-    /* Custom tokens */
-    --success: 142 71% 45%;
+    /* Semantic tokens */
+    --success: 142 71% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 92% 55%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
     --font-heading: 'Sora', sans-serif;
@@ -58,33 +60,33 @@
   }
 
   .dark {
-    --background: 210 52% 8%;
-    --foreground: 210 20% 90%;
-    --card: 210 52% 12%;
-    --card-foreground: 210 20% 90%;
-    --popover: 210 52% 12%;
-    --popover-foreground: 210 20% 90%;
-    --primary: 25 91% 48%;
+    --background: 222 52% 8%;
+    --foreground: 220 20% 90%;
+    --card: 222 52% 11%;
+    --card-foreground: 220 20% 90%;
+    --popover: 222 52% 11%;
+    --popover-foreground: 220 20% 90%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 18%;
-    --secondary-foreground: 210 20% 90%;
-    --muted: 210 30% 16%;
-    --muted-foreground: 210 15% 60%;
-    --accent: 25 91% 48%;
+    --secondary: 222 40% 18%;
+    --secondary-foreground: 220 20% 90%;
+    --muted: 222 30% 16%;
+    --muted-foreground: 220 15% 58%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
-    --border: 210 30% 20%;
-    --input: 210 30% 20%;
-    --ring: 25 91% 48%;
-    --sidebar-background: 210 52% 6%;
-    --sidebar-foreground: 210 20% 80%;
-    --sidebar-primary: 25 91% 48%;
+    --border: 222 30% 20%;
+    --input: 222 30% 20%;
+    --ring: 217 91% 60%;
+    --sidebar-background: 222 58% 7%;
+    --sidebar-foreground: 220 20% 78%;
+    --sidebar-primary: 217 91% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 14%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 210 30% 15%;
-    --sidebar-ring: 25 91% 48%;
+    --sidebar-accent: 222 45% 16%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 222 30% 14%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -102,6 +104,43 @@
   }
 }
 
+/* ── Animations ─────────────────────────────────────────── */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out both;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out both;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out both;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Helpers ────────────────────────────────────────────── */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* stat card gradient accent bar */
+.stat-card-accent {
+  @apply relative overflow-hidden;
+}
+.stat-card-accent::before {
+  content: '';
+  @apply absolute left-0 top-0 bottom-0 w-1 rounded-l-lg;
+  background: hsl(var(--accent));
 }

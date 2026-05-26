@@ -2,8 +2,9 @@ export type StatusVistoria =
   | 'nao_liberada'
   | 'liberada'
   | 'agendada'
-  | 'reprovada'
+  | 'desmarcada'
   | 'aprovada'
+  | 'reprovada'
   | 'com_pendencias'
   | 'cancelada'
   | 'distrato'
@@ -21,10 +22,26 @@ export interface UnidadeCVCRM {
   valor: number
 }
 
+export interface ClienteReserva {
+  nome: string
+  cpf?: string
+  email?: string
+  telefone?: string
+  celular?: string
+  id_pessoa?: number
+  id_reserva?: number
+  status_reserva?: string
+  data_reserva?: string
+  valor?: number
+}
+
 export interface UnidadeCompleta extends UnidadeCVCRM {
   statusVistoria: StatusVistoria
-  dataUltimaAtualizacao?: string
   supabaseUnidadeId?: string
+  blocoNome?: string
+  faseNome?: string
+  dataUltimaAtualizacao?: string
+  cliente?: ClienteReserva
 }
 
 export interface Bloco {
