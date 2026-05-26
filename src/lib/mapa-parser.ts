@@ -1,5 +1,14 @@
 import type { MapaBloco, MapaEmpreendimento, MapaUnidade, UnidadeStatus } from '@/types/mapa'
 
+/** Normaliza bloco para "BL 01", "BL 02" etc.
+ *  "1" → "BL 01" | "Bloco 2" → "BL 02" | "BL01" → "BL 01" | sem número → retorna original */
+export function normBloco(v: any): string {
+  const s = String(v ?? '').trim()
+  const m = s.match(/\d+/)
+  if (!m) return s
+  return `BL ${m[0].padStart(2, '0')}`
+}
+
 function normStatus(s: any): UnidadeStatus {
   const v = String(s ?? '').toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
@@ -32,8 +41,10 @@ export function parseMapa(raw: any, idEmpreendimento: string): MapaEmpreendiment
       nomeEmpreendimento = item.nome_empreendimento
     }
 
-    const fase  = String(item.etapa  ?? item.idetapa  ?? 'Fase 1').trim()
-    const bloco = String(item.bloco  ?? item.idbloco  ?? 'Bloco').trim()
+    // Fase: '' se não houver dado (sem fallback para 'Fase 1')
+    const fase  = String(item.etapa ?? item.fase ?? item.nome_etapa ?? item.idetapa ?? '').trim()
+    // Bloco normalizado na origem
+    const bloco = normBloco(item.bloco ?? item.nome_bloco ?? item.idbloco ?? item.bl ?? '')
     const key   = `${fase}||${bloco}`
 
     const unidade: MapaUnidade = {
@@ -41,7 +52,7 @@ export function parseMapa(raw: any, idEmpreendimento: string): MapaEmpreendiment
       unidade: String(item.unidade ?? item.idunidade_int ?? item.idunidade ?? '').trim(),
       bloco,
       fase,
-      status: normStatus(item.situacao ?? item.status),
+      status: normStatus(item.situacao ?? item.status ?? item.situacao_unidade ?? item.status_unidade),
       area_total:     toNum(item.area_total     ?? item.areaTotal     ?? item.area         ?? item.area_util   ?? item.metragem),
       area_privativa: toNum(item.area_privativa ?? item.areaPrivativa ?? item.area_priv    ?? item.areaPriv    ?? item.area_interna),
       area_comum:     toNum(item.area_comum     ?? item.areaComum     ?? item.area_externa ?? item.areaExterna),

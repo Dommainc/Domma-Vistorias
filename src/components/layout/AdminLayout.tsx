@@ -10,12 +10,11 @@ const pageTitles: Record<string, string> = {
   "/unidades": "Unidades",
   "/clientes": "Clientes",
   "/agendamentos": "Agendamentos",
-  "/usuarios": "Usuários",
-  "/configuracoes/agendamentos": "Configurações",
+  "/mapa": "Mapa de Disponibilidade",
+  "/configuracoes": "Configurações",
 };
 
 function getPageTitle(pathname: string) {
-  if (pathname.startsWith("/mapa/")) return "Mapa de Disponibilidade";
   for (const [key, label] of Object.entries(pageTitles)) {
     if (key !== "/" && pathname.startsWith(key)) return label;
   }

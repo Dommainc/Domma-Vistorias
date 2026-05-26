@@ -1,10 +1,7 @@
 import {
   Home,
   Building2,
-  DoorOpen,
-  Users,
   CalendarDays,
-  UserCog,
   LogOut,
   Settings,
   Map,
@@ -28,21 +25,16 @@ import {
 const adminItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
-  { title: "Unidades", url: "/unidades", icon: DoorOpen },
-  { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Agendamentos", url: "/agendamentos", icon: CalendarDays },
   { title: "Mapa", url: "/mapa", icon: Map },
-  { title: "Usuários", url: "/usuarios", icon: UserCog },
-  { title: "Configurações", url: "/configuracoes/agendamentos", icon: Settings },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 const vistoriadorItems = [
   { title: "Home", url: "/", icon: Home },
-  { title: "Unidades", url: "/unidades", icon: DoorOpen },
-  { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Agendamentos", url: "/agendamentos", icon: CalendarDays },
   { title: "Mapa", url: "/mapa", icon: Map },
-  { title: "Configurações", url: "/configuracoes/agendamentos", icon: Settings },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {

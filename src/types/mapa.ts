@@ -10,7 +10,7 @@ export interface MapaUnidade {
   id?: string | number;
   unidade: string;
   bloco: string;
-  fase?: string;
+  fase: string;       // '' se não houver fase no CVCRM
   status: UnidadeStatus;
   area_total?: number;
   area_privativa?: number;
@@ -23,7 +23,7 @@ export interface MapaUnidade {
 }
 
 export interface MapaBloco {
-  fase: string;
+  fase: string;       // '' se não houver fase
   bloco: string;
   unidades: MapaUnidade[];
 }
@@ -53,3 +53,24 @@ export const STATUS_LABEL: Record<UnidadeStatus, string> = {
   em_processo: 'Em Processo',
   desconhecido:'Desconhecido',
 }
+
+// ── Status de vistoria (Supabase unidades.status)
+
+export type VistoriaStatus =
+  | 'nao_liberada'   // aguardando_liberacao ou não encontrada
+  | 'liberada'       // unidade_liberada
+  | 'agendada'       // vistoria_agendada
+  | 'aprovada'       // vistoria_concluida
+  | 'reprovada'      // vistoria_reprovada
+  | 'cancelada'      // vistoria_cancelada
+
+export const VISTORIA_STATUS_LABEL: Record<VistoriaStatus, string> = {
+  nao_liberada: 'NÃO LIB',
+  liberada:     'LIBERADA',
+  agendada:     'AGENDADA',
+  aprovada:     'APROVADA',
+  reprovada:    'REPROVADA',
+  cancelada:    'CANCELADA',
+}
+
+export type VistoriaStatusMap = Map<string, VistoriaStatus>

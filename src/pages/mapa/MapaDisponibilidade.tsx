@@ -1,18 +1,17 @@
 import { useMemo, useState } from 'react'
-import { useEmpreendimentos, useMapaDisponibilidade, useUnidadeValores } from '@/hooks/useMapaDisponibilidade'
+import { useEmpreendimentos, useMapaDisponibilidade, useUnidadeValores, useVistoriaStatusMap } from '@/hooks/useMapaDisponibilidade'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { BlocoGrid } from '@/components/mapa/BlocoGrid'
-import { UnidadeModal } from '@/components/mapa/UnidadeModal'
+import { UnidadeSidePanel } from '@/components/mapa/UnidadeSidePanel'
 import { ImportarValoresDialog } from '@/components/mapa/ImportarValoresDialog'
-import { Upload, Loader2, AlertCircle, Search, RefreshCw, Map, Plus } from 'lucide-react'
+import { Upload, Loader2, AlertCircle, Search, RefreshCw, Map } from 'lucide-react'
 import { STATUS_BG, STATUS_LABEL, type MapaUnidade } from '@/types/mapa'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
 
 const EMPREENDIMENTOS_CVCRM = [
   { id: '2', nome: 'Reserva Equitativa' },
@@ -37,10 +36,10 @@ export default function MapaDisponibilidade() {
   const isAdmin     = profile?.perfil === 'admin'
   const qc          = useQueryClient()
 
-  const [selectedId,  setSelectedId]  = useState<string | null>(null)
+  const [selectedId,   setSelectedId]   = useState<string | null>(null)
   const [unidadeAtiva, setUnidadeAtiva] = useState<MapaUnidade | null>(null)
-  const [importOpen,  setImportOpen]  = useState(false)
-  const [busca,       setBusca]       = useState('')
+  const [importOpen,   setImportOpen]   = useState(false)
+  const [busca,        setBusca]        = useState('')
 
   const { data: empreendimentos = [] } = useEmpreendimentos()
   const { data: mapaRaw, isLoading, error, refetch, isFetching } = useMapaDisponibilidade(selectedId)
@@ -68,6 +67,9 @@ export default function MapaDisponibilidade() {
   const empAtual = empreendimentos.find(e => e.id_empreendimento === selectedId)
     ?? EMPREENDIMENTOS_CVCRM.find(e => e.id === selectedId)
   const empNome = mapa?.nome || empAtual?.nome || selectedId || ''
+
+  // Hook de status de vistoria — uma query por empreendimento carregado
+  const { data: vistoriaMap = new Map() } = useVistoriaStatusMap(empNome)
 
   // Auto-registra empreendimento na tabela local ao carregar com sucesso
   useMemo(() => {
@@ -292,6 +294,7 @@ export default function MapaDisponibilidade() {
                   key={`${b.fase}-${b.bloco}-${i}`}
                   bloco={b}
                   valores={valores}
+                  vistoriaMap={vistoriaMap}
                   onSelect={setUnidadeAtiva}
                   hideBloqueada={!isAdmin}
                 />
@@ -301,8 +304,8 @@ export default function MapaDisponibilidade() {
         </>
       )}
 
-      {/* ── Modal da unidade */}
-      <UnidadeModal
+      {/* ── Painel lateral da unidade */}
+      <UnidadeSidePanel
         open={!!unidadeAtiva}
         onClose={() => setUnidadeAtiva(null)}
         unidade={unidadeAtiva}

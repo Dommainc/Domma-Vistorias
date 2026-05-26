@@ -21,7 +21,7 @@ function generatePassword(length = 12): string {
     .map(b => chars[b % chars.length]).join('');
 }
 
-export default function Usuarios() {
+export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
   const { profile: currentProfile, user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
@@ -153,11 +153,14 @@ export default function Usuarios() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {!embedded && (
         <div>
           <h1 className="font-heading text-2xl font-bold">Usuários</h1>
           <p className="text-sm text-muted-foreground">Gerencie os usuários do sistema</p>
         </div>
+      )}
+      <div className="flex items-center justify-between">
+        <div />
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="mr-2 h-4 w-4" /> Novo Usuário</Button>

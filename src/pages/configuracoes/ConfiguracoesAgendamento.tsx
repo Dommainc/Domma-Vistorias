@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, Clock } from "lucide-react";
 import { toast } from "sonner";
 
-export default function ConfiguracoesAgendamento() {
+export default function ConfiguracoesAgendamento({ embedded }: { embedded?: boolean } = {}) {
   const { data: configs, isLoading } = useConfiguracoes();
   const updateConfig = useUpdateConfiguracao();
 
@@ -51,11 +51,13 @@ export default function ConfiguracoesAgendamento() {
   if (isLoading) return <div className="p-6 text-muted-foreground">Carregando...</div>;
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="font-heading text-2xl font-bold">Configurações de Agendamento</h1>
-        <p className="text-sm text-muted-foreground">Defina o comportamento padrão dos agendamentos</p>
-      </div>
+    <div className={embedded ? "space-y-6 max-w-2xl" : "space-y-6 max-w-2xl"}>
+      {!embedded && (
+        <div>
+          <h1 className="font-heading text-2xl font-bold">Configurações de Agendamento</h1>
+          <p className="text-sm text-muted-foreground">Defina o comportamento padrão dos agendamentos</p>
+        </div>
+      )}
 
       {/* Tempo médio de vistoria */}
       <Card>

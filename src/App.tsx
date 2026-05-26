@@ -17,8 +17,8 @@ import Clientes from "@/pages/clientes/Clientes";
 import ClienteForm from "@/pages/clientes/ClienteForm";
 import ClienteDetalhe from "@/pages/clientes/ClienteDetalhe";
 import Agendamentos from "@/pages/agendamentos/Agendamentos";
-import Usuarios from "@/pages/usuarios/Usuarios";
-import ConfiguracoesAgendamento from "@/pages/configuracoes/ConfiguracoesAgendamento";
+
+
 import ClienteLogin from "@/pages/cliente/ClienteLogin";
 import ClienteLayout from "@/pages/cliente/ClienteLayout";
 import ClienteHome from "@/pages/cliente/ClienteHome";
@@ -26,6 +26,7 @@ import ClienteAgendamento from "@/pages/cliente/ClienteAgendamento";
 import ClienteHistorico from "@/pages/cliente/ClienteHistorico";
 import ClienteUnidade from "@/pages/cliente/ClienteUnidade";
 import MapaDisponibilidade from "@/pages/mapa/MapaDisponibilidade";
+import Configuracoes from "@/pages/configuracoes/Configuracoes";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,8 +71,9 @@ const App = () => (
               <Route path="/clientes/novo" element={<AdminPage><ClienteForm /></AdminPage>} />
               <Route path="/clientes/:id" element={<AdminPage><ClienteDetalhe /></AdminPage>} />
               <Route path="/agendamentos" element={<AdminPage><Agendamentos /></AdminPage>} />
-              <Route path="/usuarios" element={<AdminPage allowedProfiles={['admin']}><Usuarios /></AdminPage>} />
-              <Route path="/configuracoes/agendamentos" element={<AdminPage><ConfiguracoesAgendamento /></AdminPage>} />
+              <Route path="/configuracoes" element={<AdminPage><Configuracoes /></AdminPage>} />
+              <Route path="/configuracoes/agendamentos" element={<Navigate to="/configuracoes" replace />} />
+              <Route path="/usuarios" element={<Navigate to="/configuracoes" replace />} />
               <Route path="/mapa" element={<AdminPage><MapaDisponibilidade /></AdminPage>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
