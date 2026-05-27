@@ -11,6 +11,7 @@ import Login from "@/pages/auth/Login";
 import Dashboard from "@/pages/dashboard/Dashboard";
 import Empreendimentos from "@/pages/empreendimentos/Empreendimentos";
 import EmpreendimentoForm from "@/pages/empreendimentos/EmpreendimentoForm";
+import LiberacaoUnidades from "@/pages/empreendimentos/LiberacaoUnidades";
 import Unidades from "@/pages/unidades/Unidades";
 import UnidadeDetalhe from "@/pages/unidades/UnidadeDetalhe";
 import Clientes from "@/pages/clientes/Clientes";
@@ -31,8 +32,8 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const AdminPage = ({ children, allowedProfiles }: { children: React.ReactNode; allowedProfiles?: ('admin' | 'vistoriador')[] }) => (
-  <ProtectedRoute allowedProfiles={allowedProfiles}>
+const AdminPage = ({ children, allowedProfiles }: { children: React.ReactNode; allowedProfiles?: ('admin' | 'vistoriador' | 'relacionamento')[] }) => (
+  <ProtectedRoute allowedProfiles={allowedProfiles as any}>
     <AdminLayout>{children}</AdminLayout>
   </ProtectedRoute>
 );
@@ -65,6 +66,7 @@ const App = () => (
               <Route path="/empreendimentos" element={<AdminPage allowedProfiles={['admin']}><Empreendimentos /></AdminPage>} />
               <Route path="/empreendimentos/novo" element={<AdminPage allowedProfiles={['admin']}><EmpreendimentoForm /></AdminPage>} />
               <Route path="/empreendimentos/:id/editar" element={<AdminPage allowedProfiles={['admin']}><EmpreendimentoForm /></AdminPage>} />
+              <Route path="/empreendimentos/:id/liberacao" element={<AdminPage allowedProfiles={['admin', 'vistoriador', 'relacionamento']}><LiberacaoUnidades /></AdminPage>} />
               <Route path="/unidades" element={<AdminPage><Unidades /></AdminPage>} />
               <Route path="/unidades/:id" element={<AdminPage><UnidadeDetalhe /></AdminPage>} />
               <Route path="/clientes" element={<AdminPage><Clientes /></AdminPage>} />

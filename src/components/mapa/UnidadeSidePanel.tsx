@@ -7,13 +7,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { supabase } from '@/integrations/supabase/client'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Pencil, X, Check, LayoutGrid, Ruler, Car, User, ClipboardList, Loader2 } from 'lucide-react'
+import { Pencil, X, Check, LayoutGrid, Ruler, Car, User, ClipboardList, Loader2, Shield, ShieldCheck, AlertCircle } from 'lucide-react'
 import { STATUS_BG, STATUS_LABEL, VISTORIA_STATUS_LABEL, type MapaUnidade } from '@/types/mapa'
 import type { UnidadeValorRow, ValoresMap } from '@/hooks/useMapaDisponibilidade'
 import { useAuth } from '@/hooks/useAuth'
+import { useUnidadeConfigsMap } from '@/hooks/useUnidadeConfig'
+import { verificarAptidaoVistoria } from '@/services/unidadeConfigService'
 
 interface Props {
   open: boolean
@@ -235,6 +238,13 @@ export function UnidadeSidePanel({
     open && isVendida,
   )
 
+  // Config de liberação (alçadas)
+  const { data: configsMap } = useUnidadeConfigsMap(open ? empreendimentoId : null)
+  const liberacaoConfig = unidade?.id != null ? configsMap?.get(Number(unidade.id)) ?? null : null
+
+  // Modal de bloqueio de vistoria
+  const [bloqueioMotivo, setBloqueioMotivo] = useState<string | null>(null)
+
   if (!unidade) return null
 
   const bg    = STATUS_BG[unidade.status]
@@ -253,6 +263,19 @@ export function UnidadeSidePanel({
     : 'nao_liberada'
 
   const handleGestao = async () => {
+    // Verificar aptidão para vistoria antes de navegar
+    if (unidade?.id != null && empreendimentoId) {
+      const aptidao = await verificarAptidaoVistoria(
+        empreendimentoId,
+        Number(unidade.id),
+        unidade.status,
+      )
+      if (!aptidao.apta) {
+        setBloqueioMotivo(aptidao.motivo ?? 'Unidade não está apta para vistoria')
+        return
+      }
+    }
+
     if (supaData?.unidade?.id) {
       navigate(`/unidades/${supaData.unidade.id}`)
       onClose()
@@ -293,6 +316,7 @@ export function UnidadeSidePanel({
   const btnDesabilitado = !isAdmin && !supaData?.unidade
 
   return (
+    <>
     <Sheet open={open} onOpenChange={o => !o && onClose()}>
       <SheetContent side="right" className="w-[440px] max-w-full p-0 flex flex-col gap-0">
         {/* ── Cabeçalho colorido */}
@@ -341,6 +365,51 @@ export function UnidadeSidePanel({
             <div className="space-y-2">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status de Vistoria</p>
               <VistoriaStatusBadge status={vistoriaStatus as any} />
+            </div>
+
+            {/* Status de Liberação (Alçadas) */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Shield className="h-3.5 w-3.5" /> Liberação para Vistoria
+              </p>
+              <div className="rounded-lg border divide-y text-sm">
+                <div className="px-3 py-2 flex justify-between items-center">
+                  <span className="text-muted-foreground text-xs">1ª alçada (Vistoriador)</span>
+                  {liberacaoConfig?.alcada1Liberada ? (
+                    <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-[10px] gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Liberada
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">Pendente</Badge>
+                  )}
+                </div>
+                <div className="px-3 py-2 flex justify-between items-center">
+                  <span className="text-muted-foreground text-xs">2ª alçada (Relacionamento)</span>
+                  {liberacaoConfig?.alcada2Liberada ? (
+                    <Badge className="bg-green-600 hover:bg-green-600 text-white text-[10px] gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Liberada
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-[10px]">Pendente</Badge>
+                  )}
+                </div>
+                {liberacaoConfig?.agendarAPartirDe && (
+                  <div className="px-3 py-2 flex justify-between">
+                    <span className="text-muted-foreground text-xs">Agendar a partir de</span>
+                    <span className="text-xs font-medium">
+                      {new Date(liberacaoConfig.agendarAPartirDe + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                )}
+                {liberacaoConfig?.liberarParaAgendamento && (
+                  <div className="px-3 py-2 flex justify-between">
+                    <span className="text-muted-foreground text-xs">Liberar para agendamento</span>
+                    <span className="text-xs font-medium">
+                      {new Date(liberacaoConfig.liberarParaAgendamento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Proprietário / Cliente */}
@@ -427,7 +496,7 @@ export function UnidadeSidePanel({
         </ScrollArea>
 
         {/* ── Footer fixo */}
-        <div className="flex-shrink-0 border-t px-6 py-4">
+        <div className="flex-shrink-0 border-t px-6 py-4 space-y-2">
           <Button
             className="w-full gap-2"
             onClick={handleGestao}
@@ -437,14 +506,39 @@ export function UnidadeSidePanel({
             <ClipboardList className="h-4 w-4" />
             {criando ? 'Criando unidade…' : 'Ir para Gestão da Vistoria'}
           </Button>
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => { navigate(`/empreendimentos/${empreendimentoId}/liberacao`); onClose() }}
+          >
+            <Shield className="h-4 w-4" />
+            Gestão de Liberação
+          </Button>
           {btnDesabilitado && (
-            <p className="text-xs text-muted-foreground text-center mt-2">
+            <p className="text-xs text-muted-foreground text-center mt-1">
               Unidade não cadastrada. Solicite ao administrador.
             </p>
           )}
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Modal de bloqueio de vistoria */}
+    <Dialog open={!!bloqueioMotivo} onOpenChange={o => !o && setBloqueioMotivo(null)}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            Não é possível iniciar a vistoria
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{bloqueioMotivo}</p>
+        <div className="flex justify-end">
+          <Button onClick={() => setBloqueioMotivo(null)}>Entendi</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  </>
   )
 }
 
