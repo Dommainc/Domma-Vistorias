@@ -28,6 +28,40 @@ interface Props {
 const fmtBRL = (v?: number | null) =>
   v == null ? '—' : v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+// ── Hook interno: busca dados do cliente no CVCRM para unidades vendidas
+
+function useCvCrmCliente(
+  idUnidade: number | undefined,
+  empreendimentoId: string,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['cvcrm-reservas-cliente', empreendimentoId, idUnidade],
+    enabled: enabled && !!idUnidade && !!empreendimentoId,
+    staleTime: 120_000,
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) return null
+
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cv-crm-reservas`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ idEmpreendimento: empreendimentoId }),
+        },
+      )
+      if (!res.ok) return null
+      const json = await res.json()
+      const dados: any[] = json.dados ?? []
+      return dados.find(d => d.idunidade === idUnidade) ?? null
+    },
+  })
+}
+
 // ── Hook interno: resolve unidade + cliente no Supabase via bloco + numero + empNome
 
 function useUnidadeSupabase(bloco: string, numero: string, empNome: string, enabled: boolean) {
@@ -194,6 +228,13 @@ export function UnidadeSidePanel({
     open && !!unidade,
   )
 
+  const isVendida = unidade?.status === 'vendida'
+  const { data: cvCrmCliente, isLoading: loadingCvCrm } = useCvCrmCliente(
+    unidade?.id ? Number(unidade.id) : undefined,
+    empreendimentoId,
+    open && isVendida,
+  )
+
   if (!unidade) return null
 
   const bg    = STATUS_BG[unidade.status]
@@ -307,9 +348,42 @@ export function UnidadeSidePanel({
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5" /> Proprietário / Cliente
               </p>
-              {loadingSupabase ? (
+              {(loadingSupabase || (isVendida && loadingCvCrm)) ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Buscando...
+                </div>
+              ) : isVendida && cvCrmCliente ? (
+                <div className="rounded-lg border divide-y text-sm">
+                  {cvCrmCliente.situacao && (
+                    <div className="px-3 py-2 flex justify-between">
+                      <span className="text-muted-foreground">Situação</span>
+                      <span className="font-medium">{cvCrmCliente.situacao}</span>
+                    </div>
+                  )}
+                  {cvCrmCliente.cliente && (
+                    <div className="px-3 py-2 flex justify-between">
+                      <span className="text-muted-foreground">Cliente</span>
+                      <span className="font-medium">{cvCrmCliente.cliente}</span>
+                    </div>
+                  )}
+                  {cvCrmCliente.documento_cliente && (
+                    <div className="px-3 py-2 flex justify-between">
+                      <span className="text-muted-foreground">Documento</span>
+                      <span>{cvCrmCliente.documento_cliente}</span>
+                    </div>
+                  )}
+                  {cvCrmCliente.email && (
+                    <div className="px-3 py-2 flex justify-between">
+                      <span className="text-muted-foreground">E-mail</span>
+                      <span>{cvCrmCliente.email}</span>
+                    </div>
+                  )}
+                  {cvCrmCliente.idade != null && (
+                    <div className="px-3 py-2 flex justify-between">
+                      <span className="text-muted-foreground">Idade</span>
+                      <span>{cvCrmCliente.idade} anos</span>
+                    </div>
+                  )}
                 </div>
               ) : supaData?.cliente ? (
                 <div className="rounded-lg border divide-y text-sm">
