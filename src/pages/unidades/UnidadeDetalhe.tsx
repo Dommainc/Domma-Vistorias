@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermission } from "@/hooks/usePermission";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,9 +33,9 @@ export default function UnidadeDetalhe() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { guardAction } = usePermission();
   const queryClient = useQueryClient();
 
-  // Disponibilidade state
   const [dispAtiva, setDispAtiva] = useState(false);
   const [dispDataInicio, setDispDataInicio] = useState("");
   const [dispDataFim, setDispDataFim] = useState("");
@@ -52,7 +54,6 @@ export default function UnidadeDetalhe() {
     },
   });
 
-  // Load disponibilidade fields
   useEffect(() => {
     if (unidade && !dispLoaded) {
       setDispAtiva((unidade as any).disponibilidade_ativa ?? false);
@@ -109,14 +110,12 @@ export default function UnidadeDetalhe() {
 
   const handleDesvincular = async () => {
     if (!cliente) return;
-    // Check for active appointments only
     if (agendamentoAtivo) {
       toast.error("Cancele a vistoria agendada antes de desvincular o cliente.");
       return;
     }
     const { error } = await supabase.from('clientes').delete().eq('id', cliente.id);
     if (error) { toast.error("Erro ao desvincular"); return; }
-    // Update unit status
     await supabase.from('unidades').update({ status: 'aguardando_liberacao' } as any).eq('id', id!);
     if (profile) {
       await registrarHistorico({
@@ -167,8 +166,6 @@ export default function UnidadeDetalhe() {
 
   if (!unidade) return <div className="p-6 text-muted-foreground">Carregando...</div>;
 
-  const canChangeStatus = profile?.perfil === 'admin' || profile?.perfil === 'vistoriador';
-
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-4">
@@ -193,8 +190,7 @@ export default function UnidadeDetalhe() {
             <UnitStatusBadge status={unidade.status} />
           </div>
 
-          {/* Status controls for Admin and Vistoriador */}
-          {canChangeStatus && (
+          <PermissionGuard permissionKey="UNIDADES_CHANGE_STATUS" context="section">
             <div className="pt-3 space-y-3">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Alterar Status da Unidade</Label>
@@ -202,13 +198,11 @@ export default function UnidadeDetalhe() {
                   value={unidade.status || 'aguardando_liberacao'}
                   onValueChange={(novoStatus) => {
                     if (novoStatus !== unidade.status) {
-                      handleStatusChange(novoStatus);
+                      guardAction('UNIDADES_CHANGE_STATUS', () => handleStatusChange(novoStatus))();
                     }
                   }}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="aguardando_liberacao">⏳ Aguardando Liberação</SelectItem>
                     <SelectItem value="unidade_liberada">✅ Unidade Liberada</SelectItem>
@@ -257,12 +251,11 @@ export default function UnidadeDetalhe() {
                 )}
               </div>
             </div>
-          )}
+          </PermissionGuard>
         </CardContent>
       </Card>
 
-      {/* Disponibilidade section */}
-      {canChangeStatus && (
+      <PermissionGuard permissionKey="UNIDADES_CHANGE_STATUS" context="section">
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -325,7 +318,7 @@ export default function UnidadeDetalhe() {
             </div>
           </CardContent>
         </Card>
-      )}
+      </PermissionGuard>
 
       <Card>
         <CardHeader><CardTitle className="text-base flex items-center gap-2"><User className="h-4 w-4" /> Cliente Vinculado</CardTitle></CardHeader>
@@ -339,30 +332,30 @@ export default function UnidadeDetalhe() {
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => navigate(`/clientes/${cliente.id}`)}>Ver Cliente</Button>
-                {canChangeStatus && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm"><Link2Off className="mr-1 h-3 w-3" /> Desvincular</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar desvinculação</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {agendamentoAtivo
-                            ? "Cancele a vistoria agendada antes de desvincular o cliente."
-                            : `Desvincular ${cliente.nome_completo} da unidade ${unidade.numero}? O cliente continuará cadastrado no sistema mas sem unidade vinculada.`
-                          }
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        {!agendamentoAtivo && (
-                          <AlertDialogAction onClick={handleDesvincular}>Confirmar</AlertDialogAction>
-                        )}
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" size="sm"><Link2Off className="mr-1 h-3 w-3" /> Desvincular</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmar desvinculação</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {agendamentoAtivo
+                          ? "Cancele a vistoria agendada antes de desvincular o cliente."
+                          : `Desvincular ${cliente.nome_completo} da unidade ${unidade.numero}? O cliente continuará cadastrado no sistema mas sem unidade vinculada.`
+                        }
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      {!agendamentoAtivo && (
+                        <AlertDialogAction onClick={guardAction('UNIDADES_CHANGE_STATUS', handleDesvincular)}>
+                          Confirmar
+                        </AlertDialogAction>
+                      )}
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           ) : (
