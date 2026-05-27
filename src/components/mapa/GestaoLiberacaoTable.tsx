@@ -509,8 +509,8 @@ export function GestaoLiberacaoTable({ cvcrm_id_empreendimento }: Props) {
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-end gap-1">
 
-                        {/* Botão 1ª alçada — só vistoriador */}
-                        {isVist && (
+                        {/* Botão 1ª alçada — vistoriador ou admin */}
+                        {(isVist || isAdmin) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button
@@ -530,8 +530,8 @@ export function GestaoLiberacaoTable({ cvcrm_id_empreendimento }: Props) {
                           </Tooltip>
                         )}
 
-                        {/* Botão 2ª alçada — só relacionamento */}
-                        {isRelac && (
+                        {/* Botão 2ª alçada — relacionamento ou admin */}
+                        {(isRelac || isAdmin) && (
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button

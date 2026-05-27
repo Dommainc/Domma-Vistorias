@@ -177,7 +177,7 @@ export async function liberarAlcada1(
   perfil: PerfilUsuario,
   snapshot: { bloco: string; numero: string },
 ): Promise<ResultadoAlcada> {
-  if (perfil !== 'vistoriador') {
+  if (perfil !== 'vistoriador' && perfil !== 'admin') {
     return { sucesso: false, erro: 'Apenas o perfil Vistoriador pode liberar a 1ª alçada' }
   }
 
@@ -225,7 +225,7 @@ export async function liberarAlcada2(
   perfil: PerfilUsuario,
   snapshot: { bloco: string; numero: string },
 ): Promise<ResultadoAlcada> {
-  if (perfil !== 'relacionamento') {
+  if (perfil !== 'relacionamento' && perfil !== 'admin') {
     return { sucesso: false, erro: 'Apenas o perfil Relacionamento pode liberar a 2ª alçada' }
   }
 
