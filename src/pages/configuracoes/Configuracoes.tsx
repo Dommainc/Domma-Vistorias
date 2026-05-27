@@ -1,8 +1,9 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Settings, UserCog } from 'lucide-react'
+import { Settings, UserCog, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import ConfiguracoesAgendamento from './ConfiguracoesAgendamento'
 import Usuarios from '@/pages/usuarios/Usuarios'
+import Perfis from './Perfis'
 
 export default function Configuracoes() {
   const { profile } = useAuth()
@@ -30,6 +31,11 @@ export default function Configuracoes() {
               <UserCog className="h-3.5 w-3.5" /> Usuários
             </TabsTrigger>
           )}
+          {isAdmin && (
+            <TabsTrigger value="perfis" className="gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5" /> Perfis
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="agendamentos" className="mt-5">
@@ -39,6 +45,11 @@ export default function Configuracoes() {
         {isAdmin && (
           <TabsContent value="usuarios" className="mt-5">
             <Usuarios embedded />
+          </TabsContent>
+        )}
+        {isAdmin && (
+          <TabsContent value="perfis" className="mt-5">
+            <Perfis />
           </TabsContent>
         )}
       </Tabs>

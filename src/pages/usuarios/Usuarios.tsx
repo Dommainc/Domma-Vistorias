@@ -1,4 +1,4 @@
-import { UserCog, Plus, Pencil, KeyRound, Search } from "lucide-react";
+import { UserCog, Plus, Pencil, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
+
 
 function generatePassword(length = 12): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
@@ -21,39 +21,117 @@ function generatePassword(length = 12): string {
     .map(b => chars[b % chars.length]).join('');
 }
 
+// ---------------------------------------------------------------------------
+// EditUserForm — componente separado para evitar problemas de IIFE em JSX
+// ---------------------------------------------------------------------------
+interface EditUserFormProps {
+  editUser: any;
+  currentUserId?: string;
+  editNome: string; setEditNome: (v: string) => void;
+  editRoleId: string | null; setEditRoleId: (v: string | null) => void;
+  editAtivo: boolean; setEditAtivo: (v: boolean) => void;
+  roles: any[];
+  onResetPassword: () => void;
+}
+
+function EditUserForm({
+  editUser, currentUserId,
+  editNome, setEditNome,
+  editRoleId, setEditRoleId,
+  editAtivo, setEditAtivo,
+  roles, onResetPassword,
+}: EditUserFormProps) {
+  const isSelf = editUser.id === currentUserId;
+
+  return (
+    <div className="space-y-4">
+      {isSelf && (
+        <p className="text-xs text-muted-foreground bg-muted rounded p-2">
+          Você está editando seu próprio usuário. Perfil e status não podem ser alterados.
+        </p>
+      )}
+      <div className="space-y-2">
+        <Label>Nome</Label>
+        <Input value={editNome} onChange={e => setEditNome(e.target.value)} />
+      </div>
+      <div className={`space-y-2 ${isSelf ? 'opacity-50 pointer-events-none' : ''}`}>
+        <Label>Perfil *</Label>
+        <Select
+          value={editRoleId ?? '__none__'}
+          onValueChange={v => setEditRoleId(v === '__none__' ? null : v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecionar perfil..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__none__">Nenhum</SelectItem>
+            {roles.map((r: any) => (
+              <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className={`flex items-center gap-2 ${isSelf ? 'opacity-50 pointer-events-none' : ''}`}>
+        <Switch checked={editAtivo} onCheckedChange={setEditAtivo} />
+        <Label>Ativo</Label>
+      </div>
+      <Button variant="outline" onClick={onResetPassword}>
+        <KeyRound className="mr-2 h-4 w-4" /> Redefinir Senha
+      </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios
+// ---------------------------------------------------------------------------
 export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
-  const { profile: currentProfile, user: currentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
-  const [filtroPerfil, setFiltroPerfil] = useState("all");
   const [filtroStatus, setFiltroStatus] = useState("all");
 
-  // Create user dialog state
+  // Create dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [newNome, setNewNome] = useState("");
   const [newEmail, setNewEmail] = useState("");
-  const [newPerfil, setNewPerfil] = useState<string>("vistoriador");
+  const [newRoleId, setNewRoleId] = useState<string | null>(null);
   const [newSenha, setNewSenha] = useState(generatePassword());
   const [creating, setCreating] = useState(false);
 
-  // Edit user dialog state
+  // Edit dialog state
   const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
   const [editNome, setEditNome] = useState("");
-  const [editPerfil, setEditPerfil] = useState("");
+  const [editRoleId, setEditRoleId] = useState<string | null>(null);
   const [editAtivo, setEditAtivo] = useState(true);
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ['profiles'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').order('criado_em', { ascending: false });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, roles(id, nome)')
+        .order('criado_em', { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
+  const { data: roles = [] } = useQuery({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('roles')
+        .select('id, nome')
+        .eq('ativo', true)
+        .order('nome');
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+  });
+
   const filtered = profiles?.filter(p => {
-    if (filtroPerfil !== 'all' && p.perfil !== filtroPerfil) return false;
     if (filtroStatus !== 'all' && String(p.ativo) !== filtroStatus) return false;
     if (busca && !p.nome.toLowerCase().includes(busca.toLowerCase()) && !p.email.toLowerCase().includes(busca.toLowerCase())) return false;
     return true;
@@ -63,19 +141,23 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
     if (!newNome.trim() || !newEmail.trim() || !newSenha) {
       toast.error("Preencha todos os campos obrigatórios"); return;
     }
+    if (!newRoleId) {
+      toast.error("Selecione um perfil para o usuário"); return;
+    }
+    const selectedRole = roles.find(r => r.id === newRoleId);
+    const perfil = selectedRole ? selectedRole.nome.toLowerCase() : 'vistoriador';
+
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-users', {
-        body: {
-          action: 'create',
-          email: newEmail.trim(),
-          password: newSenha,
-          nome: newNome.trim(),
-          perfil: newPerfil,
-        },
+        body: { action: 'create', email: newEmail.trim(), password: newSenha, nome: newNome.trim(), perfil },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      if (data?.user_id) {
+        await supabase.from('profiles').update({ role_id: newRoleId } as any).eq('id', data.user_id);
+      }
 
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
       toast.success("Usuário criado com sucesso!", {
@@ -84,7 +166,7 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
         duration: 10000,
       });
       setCreateOpen(false);
-      setNewNome(""); setNewEmail(""); setNewPerfil("vistoriador"); setNewSenha(generatePassword());
+      setNewNome(""); setNewEmail(""); setNewRoleId(null); setNewSenha(generatePassword());
     } catch (err: any) {
       toast.error(err.message || "Erro ao criar usuário");
     } finally {
@@ -94,27 +176,23 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
 
   const handleEdit = async () => {
     if (!editUser) return;
+    const isSelf = editUser.id === currentUser?.id;
     try {
-      // Don't allow editing self
-      if (editUser.id === currentUser?.id) {
-        toast.error("Você não pode alterar seu próprio perfil"); return;
+      const updatePayload: any = { nome: editNome, role_id: editRoleId };
+      if (!isSelf) {
+        const selectedRole = roles.find(r => r.id === editRoleId);
+        updatePayload.perfil = selectedRole ? selectedRole.nome.toLowerCase() : editUser.perfil;
+        updatePayload.ativo  = editAtivo;
       }
-      const { error } = await supabase.from('profiles').update({
-        nome: editNome,
-        perfil: editPerfil,
-        ativo: editAtivo,
-      }).eq('id', editUser.id);
+      const { error } = await supabase.from('profiles').update(updatePayload).eq('id', editUser.id);
       if (error) throw error;
 
-      // If deactivating, ban the user
-      if (!editAtivo && editUser.ativo) {
-        await supabase.functions.invoke('manage-users', {
-          body: { action: 'ban', user_id: editUser.id },
-        });
-      } else if (editAtivo && !editUser.ativo) {
-        await supabase.functions.invoke('manage-users', {
-          body: { action: 'unban', user_id: editUser.id },
-        });
+      if (!isSelf) {
+        if (!editAtivo && editUser.ativo) {
+          await supabase.functions.invoke('manage-users', { body: { action: 'ban', user_id: editUser.id } });
+        } else if (editAtivo && !editUser.ativo) {
+          await supabase.functions.invoke('manage-users', { body: { action: 'unban', user_id: editUser.id } });
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
@@ -146,10 +224,18 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
   const openEdit = (p: any) => {
     setEditUser(p);
     setEditNome(p.nome);
-    setEditPerfil(p.perfil);
     setEditAtivo(p.ativo ?? true);
+    // Usa role_id direto; se null, tenta encontrar o role pelo perfil
+    let roleId = p.role_id ?? null;
+    if (!roleId) {
+      const match = (roles as any[]).find(r => r.nome.toLowerCase() === p.perfil?.toLowerCase());
+      roleId = match?.id ?? null;
+    }
+    setEditRoleId(roleId);
     setEditOpen(true);
   };
+
+  const getRoleLabel = (p: any) => (p as any).roles?.nome ?? (p.perfil === 'admin' ? 'Admin' : 'Vistoriador');
 
   return (
     <div className="space-y-6">
@@ -178,16 +264,19 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
               </div>
               <div className="space-y-2">
                 <Label>Perfil *</Label>
-                <RadioGroup value={newPerfil} onValueChange={setNewPerfil} className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="admin" id="r-admin" />
-                    <Label htmlFor="r-admin">Admin</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="vistoriador" id="r-vist" />
-                    <Label htmlFor="r-vist">Vistoriador</Label>
-                  </div>
-                </RadioGroup>
+                <Select
+                  value={newRoleId ?? '__none__'}
+                  onValueChange={v => setNewRoleId(v === '__none__' ? null : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar perfil..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r: any) => (
+                      <SelectItem key={r.id} value={r.id}>{r.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Senha Temporária *</Label>
@@ -207,14 +296,6 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
 
       <div className="flex gap-3 flex-wrap">
         <Input placeholder="Buscar nome ou e-mail..." value={busca} onChange={e => setBusca(e.target.value)} className="max-w-xs" />
-        <Select value={filtroPerfil} onValueChange={setFiltroPerfil}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Perfil" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="vistoriador">Vistoriador</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={filtroStatus} onValueChange={setFiltroStatus}>
           <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
@@ -257,7 +338,7 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
                     <TableCell>{p.email}</TableCell>
                     <TableCell>
                       <Badge variant={p.perfil === 'admin' ? 'default' : 'secondary'}>
-                        {p.perfil === 'admin' ? 'Admin' : 'Vistoriador'}
+                        {getRoleLabel(p)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -266,7 +347,7 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)} disabled={p.id === currentUser?.id}>
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -282,34 +363,15 @@ export default function Usuarios({ embedded }: { embedded?: boolean } = {}) {
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Editar Usuário</DialogTitle></DialogHeader>
-          {editUser && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input value={editNome} onChange={e => setEditNome(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Perfil</Label>
-                <RadioGroup value={editPerfil} onValueChange={setEditPerfil} className="flex gap-4">
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="admin" id="e-admin" />
-                    <Label htmlFor="e-admin">Admin</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="vistoriador" id="e-vist" />
-                    <Label htmlFor="e-vist">Vistoriador</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch checked={editAtivo} onCheckedChange={setEditAtivo} />
-                <Label>Ativo</Label>
-              </div>
-              <Button variant="outline" onClick={handleResetPassword}>
-                <KeyRound className="mr-2 h-4 w-4" /> Redefinir Senha
-              </Button>
-            </div>
-          )}
+          {editUser && <EditUserForm
+            editUser={editUser}
+            currentUserId={currentUser?.id}
+            editNome={editNome} setEditNome={setEditNome}
+            editRoleId={editRoleId} setEditRoleId={setEditRoleId}
+            editAtivo={editAtivo} setEditAtivo={setEditAtivo}
+            roles={roles}
+            onResetPassword={handleResetPassword}
+          />}
           <DialogFooter>
             <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
             <Button onClick={handleEdit}>Salvar</Button>

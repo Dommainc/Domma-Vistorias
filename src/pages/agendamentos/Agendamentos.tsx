@@ -14,6 +14,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { usePermission } from "@/hooks/usePermission";
 import { AgendamentoStatusBadge } from "@/components/StatusBadge";
 import { registrarHistorico } from "@/lib/historico";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
@@ -40,6 +41,7 @@ const EVENT_COLORS: Record<string, string> = {
 
 export default function Agendamentos() {
   const { profile } = useAuth();
+  const { guardAction } = usePermission();
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState("all");
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>(() =>
@@ -184,17 +186,19 @@ export default function Agendamentos() {
     style: { backgroundColor: EVENT_COLORS[event.status] || '#888', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '0.75rem' },
   }), []);
 
-  const canChangeStatus = profile?.perfil === 'admin' || profile?.perfil === 'vistoriador';
   const detailAg = detailId ? agendamentos?.find(a => a.id === detailId) : null;
 
   const isTerminal = (status: string | null) => ['vistoria_concluida', 'vistoria_cancelada'].includes(status || '');
 
   const renderStatusSelect = (ag: any) => {
     if (isTerminal(ag.status)) return <span className="text-xs text-muted-foreground italic">Status terminal</span>;
-    
+
+    const onValueChange = (v: string) =>
+      guardAction('AGENDAMENTOS_CHANGE_STATUS', () => handleStatusSelect(ag.id, v))();
+
     if (ag.status === 'aguardando_confirmacao') {
       return (
-        <Select value={ag.status || ''} onValueChange={(v) => handleStatusSelect(ag.id, v)}>
+        <Select value={ag.status || ''} onValueChange={onValueChange}>
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="aguardando_confirmacao">⏳ Aguardando Confirmação</SelectItem>
@@ -207,7 +211,7 @@ export default function Agendamentos() {
 
     if (ag.status === 'vistoria_agendada') {
       return (
-        <Select value={ag.status || ''} onValueChange={(v) => handleStatusSelect(ag.id, v)}>
+        <Select value={ag.status || ''} onValueChange={onValueChange}>
           <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="vistoria_agendada">📅 Vistoria Agendada</SelectItem>
@@ -295,7 +299,7 @@ export default function Agendamentos() {
                     <TableHead>Unidade</TableHead>
                     <TableHead>Data/Hora</TableHead>
                     <TableHead>Status</TableHead>
-                    {canChangeStatus && <TableHead>Alterar Status</TableHead>}
+                    <TableHead>Alterar Status</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -312,14 +316,12 @@ export default function Agendamentos() {
                       </TableCell>
                       <TableCell>{formatDateTime(a.data_hora)}</TableCell>
                       <TableCell><AgendamentoStatusBadge status={a.status} /></TableCell>
-                      {canChangeStatus && (
-                        <TableCell onClick={e => e.stopPropagation()}>
-                          {renderStatusSelect(a)}
-                        </TableCell>
-                      )}
+                      <TableCell onClick={e => e.stopPropagation()}>
+                        {renderStatusSelect(a)}
+                      </TableCell>
                       <TableCell className="text-right" onClick={e => e.stopPropagation()}>
-                        {isTerminal(a.status) && canChangeStatus && (
-                          <Button size="sm" variant="ghost" onClick={() => handleDelete(a.id)}>
+                        {isTerminal(a.status) && (
+                          <Button size="sm" variant="ghost" onClick={guardAction('AGENDAMENTOS_CHANGE_STATUS', () => handleDelete(a.id))}>
                             Excluir
                           </Button>
                         )}
@@ -367,7 +369,7 @@ export default function Agendamentos() {
                 </div>
               )}
 
-              {detailAg.status === 'vistoria_cancelada' && detailAg.motivo_cancelamento && canChangeStatus && (
+              {detailAg.status === 'vistoria_cancelada' && detailAg.motivo_cancelamento && (
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase">Motivo de Cancelamento</p>
                   <p className="text-sm">{detailAg.motivo_cancelamento}</p>
@@ -376,7 +378,7 @@ export default function Agendamentos() {
 
               <HistoricoTimeline entidadeTipo="agendamento" entidadeId={detailAg.id} />
 
-              {canChangeStatus && !isTerminal(detailAg.status) && (
+              {!isTerminal(detailAg.status) && (
                 <div className="space-y-2 pt-4 border-t">
                   <p className="text-xs font-semibold text-muted-foreground uppercase">Ações</p>
                   <div onClick={e => e.stopPropagation()}>
