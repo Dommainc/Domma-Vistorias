@@ -72,8 +72,9 @@ export default function MapaDisponibilidade() {
   const { data: vistoriaMap = new Map() } = useVistoriaStatusMap(empNome)
 
   // Auto-registra empreendimento na tabela local ao carregar com sucesso
+  // Necessário para qualquer perfil (FK de unidade_config aponta para empreendimentos_mapa)
   useMemo(() => {
-    if (!mapa || !selectedId || !mapa.nome || !isAdmin) return
+    if (!mapa || !selectedId || !mapa.nome) return
     if (empreendimentos.some(e => e.id_empreendimento === selectedId)) return
     supabase.from('empreendimentos_mapa' as any)
       .upsert({ id_empreendimento: selectedId, nome: mapa.nome })
@@ -130,7 +131,7 @@ export default function MapaDisponibilidade() {
             Mapa de Disponibilidade
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Visualize as unidades dos empreendimentos em tempo real via CVCRM.
+            Unidades dos empreendimentos em tempo real via CVCRM.
           </p>
         </div>
         {selectedId && isAdmin && mapa && (
@@ -140,67 +141,59 @@ export default function MapaDisponibilidade() {
         )}
       </div>
 
-      {/* ── Seletor */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-3 items-end">
-            <div className="space-y-1 min-w-[260px]">
-              <label className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                Empreendimento
-              </label>
-              <Select value={selectedId ?? ''} onValueChange={handleSelect}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Selecione um empreendimento..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {listaSelect.map(e => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* ── Barra de controles */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <Select value={selectedId ?? ''} onValueChange={handleSelect}>
+          <SelectTrigger className="h-9 min-w-[240px] max-w-xs">
+            <SelectValue placeholder="Selecione um empreendimento…" />
+          </SelectTrigger>
+          <SelectContent>
+            {listaSelect.map(e => (
+              <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            {selectedId && (
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  value={busca}
-                  onChange={e => setBusca(e.target.value)}
-                  placeholder="Buscar unidade…"
-                  className="h-9 pl-8 w-44 text-sm"
-                />
-              </div>
-            )}
-
-            {selectedId && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 gap-1.5"
-                onClick={() => refetch()}
-                disabled={isFetching}
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
-                Atualizar
-              </Button>
-            )}
+        {selectedId && (
+          <div className="relative flex-shrink-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar unidade…"
+              className="h-9 pl-8 w-44 text-sm"
+            />
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {selectedId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Atualizando…' : 'Atualizar'}
+          </Button>
+        )}
+      </div>
 
       {/* ── Estado vazio */}
       {!selectedId && (
-        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-          <MapIcon className="h-12 w-12 mb-3 opacity-20" />
-          <p className="text-sm">Selecione um empreendimento para carregar o mapa.</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="h-16 w-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
+            <MapIcon className="h-8 w-8 text-muted-foreground/40" />
+          </div>
+          <p className="text-base font-medium text-foreground">Nenhum empreendimento selecionado</p>
+          <p className="text-sm text-muted-foreground mt-1">Escolha um empreendimento acima para carregar o mapa.</p>
         </div>
       )}
 
       {/* ── Carregando */}
       {selectedId && isLoading && (
-        <div className="flex items-center gap-2.5 text-sm text-muted-foreground py-8 justify-center">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground py-12 justify-center">
           <Loader2 className="h-5 w-5 animate-spin" />
           Carregando unidades do CVCRM…
         </div>
@@ -208,87 +201,75 @@ export default function MapaDisponibilidade() {
 
       {/* ── Erro */}
       {errMsg && (
-        <Card className="border-amber-300 bg-amber-50 dark:bg-amber-950/20">
-          <CardContent className="p-4 flex gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">Não foi possível carregar o mapa</p>
-              <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">{errMsg}</p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 p-4 flex gap-3">
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-400">Não foi possível carregar o mapa</p>
+            <p className="text-sm text-amber-700 dark:text-amber-500 mt-0.5">{errMsg}</p>
+          </div>
+        </div>
       )}
 
       {/* ── Mapa carregado */}
       {mapa && !isLoading && (
         <>
           {/* Painel de totais */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-border bg-muted/30">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
                     Empreendimento
                   </p>
-                  <p className="text-lg font-bold text-foreground leading-none">{empNome}</p>
+                  <p className="text-xl font-bold text-foreground leading-tight">{empNome}</p>
                 </div>
 
                 <div className="flex items-center gap-5 flex-wrap">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total</p>
-                    <p className="text-2xl font-bold text-foreground">{mapa.totais.total}</p>
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Total</p>
+                    <p className="text-3xl font-bold text-foreground tabular-nums">{mapa.totais.total}</p>
                   </div>
-                  <div className="h-8 w-px bg-border hidden sm:block" />
-                  {LEGENDA.filter(l => !(!isAdmin) || l.status !== 'bloqueada').map(l => {
+                  <div className="h-10 w-px bg-border hidden sm:block" />
+                  {LEGENDA.filter(l => isAdmin || l.status !== 'bloqueada').map(l => {
                     const count = mapa.totais[l.status] ?? 0
                     if (count === 0) return null
                     return (
-                      <div key={l.status}>
-                        <div className="flex items-center gap-1 mb-0.5">
-                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_BG[l.status] }} />
+                      <div key={l.status} className="text-center">
+                        <div className="flex items-center gap-1 mb-0.5 justify-center">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_BG[l.status] }} />
                           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{l.label}</p>
                         </div>
-                        <p className="text-xl font-bold pl-3" style={{ color: STATUS_BG[l.status] }}>{count}</p>
+                        <p className="text-2xl font-bold tabular-nums" style={{ color: STATUS_BG[l.status] }}>{count}</p>
                       </div>
                     )
                   })}
                 </div>
               </div>
+            </div>
 
-              {/* Barra proporcional global */}
-              <div className="mt-4 h-2 rounded-full overflow-hidden bg-border flex">
-                {LEGENDA.map(l => {
-                  const count = mapa.totais[l.status] ?? 0
-                  const pct = mapa.totais.total > 0 ? (count / mapa.totais.total) * 100 : 0
-                  return pct > 0 ? (
-                    <div
-                      key={l.status}
-                      style={{ width: `${pct}%`, backgroundColor: STATUS_BG[l.status] }}
-                      title={`${l.label}: ${count}`}
-                    />
-                  ) : null
-                })}
-              </div>
-
-              {/* Legenda */}
-              <div className="mt-3 flex flex-wrap gap-3">
-                {LEGENDA.map(l => (
-                  <div key={l.status} className="flex items-center gap-1.5">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: STATUS_BG[l.status] }} />
-                    <span className="text-[11px] text-muted-foreground">{l.label}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+            {/* Barra proporcional global */}
+            <div className="h-2 flex">
+              {LEGENDA.map(l => {
+                const count = mapa.totais[l.status] ?? 0
+                const pct = mapa.totais.total > 0 ? (count / mapa.totais.total) * 100 : 0
+                return pct > 0 ? (
+                  <div
+                    key={l.status}
+                    style={{ width: `${pct}%`, backgroundColor: STATUS_BG[l.status] }}
+                    title={`${l.label}: ${count}`}
+                  />
+                ) : null
+              })}
+            </div>
+          </div>
 
           {/* Blocos */}
           {(mapaFiltrado?.blocos.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              {busca ? `Nenhuma unidade encontrada para "${busca}".` : 'Nenhuma unidade retornada para este empreendimento.'}
-            </p>
+            <div className="text-center py-10 text-muted-foreground">
+              <p className="text-sm">{busca ? `Nenhuma unidade encontrada para "${busca}".` : 'Nenhuma unidade retornada.'}</p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {mapaFiltrado?.blocos.map((b, i) => (
                 <BlocoGrid
                   key={`${b.fase}-${b.bloco}-${i}`}

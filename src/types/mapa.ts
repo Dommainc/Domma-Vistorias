@@ -65,12 +65,22 @@ export type VistoriaStatus =
   | 'cancelada'      // vistoria_cancelada
 
 export const VISTORIA_STATUS_LABEL: Record<VistoriaStatus, string> = {
-  nao_liberada: 'NÃO LIB',
-  liberada:     'LIBERADA',
-  agendada:     'AGENDADA',
-  aprovada:     'APROVADA',
-  reprovada:    'REPROVADA',
-  cancelada:    'CANCELADA',
+  nao_liberada: 'Não Liberada',
+  liberada:     'Liberada',
+  agendada:     'Agendada',
+  aprovada:     'Aprovada',
+  reprovada:    'Reprovada',
+  cancelada:    'Cancelada',
+}
+
+/** Label curta usada em células pequenas do mapa (máx ~10 chars) */
+export const VISTORIA_STATUS_LABEL_SHORT: Record<VistoriaStatus, string> = {
+  nao_liberada: 'Não Lib.',
+  liberada:     'Liberada',
+  agendada:     'Agendada',
+  aprovada:     'Aprovada',
+  reprovada:    'Reprovada',
+  cancelada:    'Cancelada',
 }
 
 export type VistoriaStatusMap = Map<string, VistoriaStatus>

@@ -16,7 +16,6 @@ import { STATUS_BG, STATUS_LABEL, VISTORIA_STATUS_LABEL, type MapaUnidade } from
 import type { UnidadeValorRow, ValoresMap } from '@/hooks/useMapaDisponibilidade'
 import { useAuth } from '@/hooks/useAuth'
 import { useUnidadeConfigsMap } from '@/hooks/useUnidadeConfig'
-import { verificarAptidaoVistoria } from '@/services/unidadeConfigService'
 
 interface Props {
   open: boolean
@@ -221,7 +220,9 @@ export function UnidadeSidePanel({
 }: Props) {
   const navigate  = useNavigate()
   const { profile } = useAuth()
-  const isAdmin   = profile?.perfil === 'admin'
+  const isAdmin      = profile?.perfil === 'admin'
+  const isVistoriador = profile?.perfil === 'vistoriador'
+  const canManageVistoria = isAdmin || isVistoriador
   const [criando, setCriando] = useState(false)
 
   const { data: supaData, isLoading: loadingSupabase } = useUnidadeSupabase(
@@ -263,29 +264,17 @@ export function UnidadeSidePanel({
     : 'nao_liberada'
 
   const handleGestao = async () => {
-    // Verificar aptidão para vistoria antes de navegar
-    if (unidade?.id != null && empreendimentoId) {
-      const aptidao = await verificarAptidaoVistoria(
-        empreendimentoId,
-        Number(unidade.id),
-        unidade.status,
-      )
-      if (!aptidao.apta) {
-        setBloqueioMotivo(aptidao.motivo ?? 'Unidade não está apta para vistoria')
-        return
-      }
-    }
-
+    // Se já existe unidade no Supabase → navega direto (sem bloquear)
     if (supaData?.unidade?.id) {
       navigate(`/unidades/${supaData.unidade.id}`)
       onClose()
       return
     }
 
-    if (!isAdmin) return // botão desabilitado, não deveria chegar aqui
+    if (!canManageVistoria) return // relacionamento/gerente sem unidade → desabilitado
 
     if (!supaData?.empId) {
-      toast.error('Empreendimento não encontrado no sistema. Cadastre-o primeiro.')
+      toast.error('Empreendimento não encontrado no sistema. Aguarde o carregamento do mapa.')
       return
     }
 
@@ -295,25 +284,25 @@ export function UnidadeSidePanel({
         .from('unidades')
         .insert({
           empreendimento_id: supaData.empId,
-          bloco: unidade.bloco,
-          numero: unidade.unidade,
+          bloco: unidade!.bloco,
+          numero: unidade!.unidade,
           status: 'aguardando_liberacao',
         } as any)
         .select('id')
         .single()
 
       if (error) throw error
-      toast.success('Unidade criada e aberta para gestão')
+      toast.success('Unidade registrada e aberta para gestão')
       navigate(`/unidades/${nova.id}`)
       onClose()
     } catch (e: any) {
-      toast.error(e.message ?? 'Erro ao criar unidade')
+      toast.error(e.message ?? 'Erro ao registrar unidade')
     } finally {
       setCriando(false)
     }
   }
 
-  const btnDesabilitado = !isAdmin && !supaData?.unidade
+  const btnDesabilitado = !canManageVistoria && !supaData?.unidade
 
   return (
     <>
@@ -516,7 +505,7 @@ export function UnidadeSidePanel({
           </Button>
           {btnDesabilitado && (
             <p className="text-xs text-muted-foreground text-center mt-1">
-              Unidade não cadastrada. Solicite ao administrador.
+              Unidade não cadastrada. Solicite ao vistoriador ou administrador.
             </p>
           )}
         </div>
