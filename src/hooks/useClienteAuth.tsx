@@ -10,7 +10,7 @@ interface ClienteSession {
 interface ClienteAuthContextType {
   session: ClienteSession | null;
   loading: boolean;
-  login: (cpf: string, dataNascimento: string) => Promise<{ error: string | null }>;
+  login: (cpf: string, email: string) => Promise<{ error: string | null }>;
   logout: () => void;
 }
 
@@ -30,17 +30,19 @@ export function ClienteAuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = async (cpf: string, dataNascimento: string) => {
+  const login = async (cpf: string, email: string) => {
     try {
-      const { data, error } = await supabase.functions.invoke('authenticate-client', {
-        body: { cpf, data_nascimento: dataNascimento },
+      const { data, error } = await supabase.rpc('authenticate_cliente', {
+        p_cpf: cpf,
+        p_email: email,
       });
-      if (error) return { error: 'Erro ao autenticar' };
-      if (data?.error) return { error: data.error };
+      if (error) return { error: error.message || 'Erro ao autenticar' };
+      const result = data as any;
+      if (result?.error) return { error: result.error };
       const sess: ClienteSession = {
-        token_sessao: data.token_sessao,
-        cliente_id: data.cliente_id,
-        nome: data.nome,
+        token_sessao: result.token_sessao,
+        cliente_id: result.cliente_id,
+        nome: result.nome,
       };
       sessionStorage.setItem('cliente_session', JSON.stringify(sess));
       setSession(sess);

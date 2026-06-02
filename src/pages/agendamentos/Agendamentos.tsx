@@ -58,8 +58,8 @@ export default function Agendamentos() {
     queryKey: ['agendamentos', filtroStatus],
     queryFn: async () => {
       let query = supabase.from('agendamentos')
-        .select('*, clientes(nome_completo, email, cpf), unidades(numero, bloco, empreendimentos(nome))')
-        .order('data_hora', { ascending: false });
+        .select('*, clientes(nome_completo, email, cpf), unidades(numero, bloco, disponibilidade_dias_semana, empreendimentos(nome))')
+        .order('data_hora', { ascending: true });
       if (filtroStatus !== 'all') query = query.eq('status', filtroStatus);
       const { data, error } = await query;
       if (error) throw error;
@@ -170,16 +170,28 @@ export default function Agendamentos() {
     a.href = url; a.download = 'agendamentos.csv'; a.click();
   };
 
+  const STATUS_OCULTOS_CALENDARIO = ['vistoria_concluida', 'vistoria_cancelada', 'remarcada', 'revistoria'];
+
   const calendarEvents = useMemo(() => {
     if (!agendamentos) return [];
-    return agendamentos.map(a => ({
-      id: a.id,
-      title: `${(a as any).clientes?.nome_completo || 'Cliente'} - ${(a as any).unidades?.numero || ''}`,
-      start: new Date(a.data_hora),
-      end: new Date(new Date(a.data_hora).getTime() + 60 * 60 * 1000),
-      status: a.status,
-      resource: a,
-    }));
+    return agendamentos
+      .filter(a => {
+        if (STATUS_OCULTOS_CALENDARIO.includes(a.status || '')) return false;
+        const diasPermitidos: number[] | null = (a as any).unidades?.disponibilidade_dias_semana;
+        if (diasPermitidos && diasPermitidos.length > 0) {
+          const diaSemana = getDay(new Date(a.data_hora));
+          if (!diasPermitidos.includes(diaSemana)) return false;
+        }
+        return true;
+      })
+      .map(a => ({
+        id: a.id,
+        title: `${(a as any).clientes?.nome_completo || 'Cliente'} - ${(a as any).unidades?.numero || ''}`,
+        start: new Date(a.data_hora),
+        end: new Date(new Date(a.data_hora).getTime() + 60 * 60 * 1000),
+        status: a.status,
+        resource: a,
+      }));
   }, [agendamentos]);
 
   const eventStyleGetter = useCallback((event: any) => ({

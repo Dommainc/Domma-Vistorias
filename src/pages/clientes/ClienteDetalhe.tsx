@@ -29,7 +29,7 @@ export default function ClienteDetalhe() {
   const [editDataNascimento, setEditDataNascimento] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data: cliente, refetch } = useQuery({
+  const { data: cliente, refetch, isError, error: queryError } = useQuery({
     queryKey: ['cliente', id],
     queryFn: async () => {
       const { data, error } = await supabase.from('clientes').select('*, unidades(numero, bloco, andar, tipo, empreendimentos(nome))').eq('id', id!).single();
@@ -124,6 +124,13 @@ export default function ClienteDetalhe() {
     navigate('/clientes');
   };
 
+  if (isError) return (
+    <div className="p-6 space-y-2">
+      <p className="text-destructive font-medium">Erro ao carregar cliente.</p>
+      <p className="text-sm text-muted-foreground">{(queryError as any)?.message}</p>
+      <Button variant="outline" onClick={() => navigate('/clientes')}>Voltar</Button>
+    </div>
+  );
   if (!cliente) return <div className="p-6 text-muted-foreground">Carregando...</div>;
 
   const unidade = cliente as any;
@@ -217,7 +224,9 @@ export default function ClienteDetalhe() {
           ) : (
             <div className="grid gap-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">CPF:</span><span>{formatCPF(cliente.cpf)}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Data Nascimento:</span><span>{formatDate(cliente.data_nascimento + 'T00:00:00')}</span></div>
+              {cliente.data_nascimento && (
+                <div className="flex justify-between"><span className="text-muted-foreground">Data Nascimento:</span><span>{formatDate(cliente.data_nascimento + 'T00:00:00')}</span></div>
+              )}
               <div className="flex justify-between"><span className="text-muted-foreground">E-mail:</span><span>{cliente.email}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Telefone:</span><span>{cliente.telefone || '-'}</span></div>
             </div>
@@ -247,7 +256,7 @@ export default function ClienteDetalhe() {
             Acesso do Cliente ao Portal
           </div>
           <p className="text-xs text-muted-foreground">
-            O cliente acessa o portal usando CPF e data de nascimento:
+            O cliente acessa o portal usando CPF e e-mail:
           </p>
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono bg-background rounded px-2 py-1 border flex-1 truncate">{PORTAL_URL}</span>

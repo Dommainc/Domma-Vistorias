@@ -4,6 +4,8 @@ import { useClienteAuth } from "@/hooks/useClienteAuth";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Building2, CalendarDays, AlertTriangle, ChevronRight, CheckCircle2, Clock } from "lucide-react";
+
+const cleanBloco = (b: string | null) => b ? b.replace(/^BL\s*/i, '').trim() : null;
 import { UnitStatusBadge, AgendamentoStatusBadge } from "@/components/StatusBadge";
 import { formatDateTime } from "@/lib/formatters";
 import { toast } from "sonner";
@@ -119,7 +121,7 @@ export default function ClienteHome() {
         </div>
         <p className="text-sm font-medium text-foreground">{unidade?.empreendimentos?.nome}</p>
         <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-          {unidade?.bloco ? `Bloco ${unidade.bloco} • ` : ''}Apartamento {unidade?.numero}
+          {cleanBloco(unidade?.bloco) ? `Bloco ${cleanBloco(unidade.bloco)} • ` : ''}Apartamento {unidade?.numero}
         </p>
         <UnitStatusBadge status={unidade?.status} />
       </div>

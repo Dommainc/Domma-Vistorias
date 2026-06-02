@@ -5,6 +5,7 @@ import {
   LogOut,
   Settings,
   Map,
+  Users,
   ChevronRight,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -28,6 +29,7 @@ const adminItems = [
   { title: "Empreendimentos", url: "/empreendimentos", icon: Building2 },
   { title: "Agendamentos", url: "/agendamentos", icon: CalendarDays },
   { title: "Mapa", url: "/mapa", icon: Map },
+  { title: "Clientes", url: "/clientes", icon: Users },
 ];
 
 const vistoriadorItems = [

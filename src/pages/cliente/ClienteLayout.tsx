@@ -1,7 +1,7 @@
 import { Outlet, useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useClienteAuth } from "@/hooks/useClienteAuth";
 import { Button } from "@/components/ui/button";
-import { Building2, LogOut, Home, CalendarDays, History } from "lucide-react";
+import { Building2, LogOut, Home, CalendarDays, History, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -39,7 +39,7 @@ export default function ClienteLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card shadow-sm">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-xl shadow-sm"
@@ -82,10 +82,21 @@ export default function ClienteLayout() {
               {item.label}
             </button>
           ))}
+          <div className="mt-2 pt-2 border-t">
+            <a
+              href="https://domma.cvcrm.com.br/cliente/home"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-150"
+            >
+              <ExternalLink className="h-4 w-4 flex-shrink-0" />
+              Portal CV
+            </a>
+          </div>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 pb-28 md:pb-8">
+        <main className="flex-1 w-full px-6 py-6 pb-28 md:pb-8">
           <Outlet />
         </main>
       </div>
