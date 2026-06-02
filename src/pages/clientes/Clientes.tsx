@@ -1,4 +1,4 @@
-import { Users, Plus, Upload, Eye, RefreshCw } from "lucide-react";
+import { Users, Plus, Upload, Eye, RefreshCw, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -57,6 +57,7 @@ export default function Clientes() {
   const [importing, setImporting] = useState(false);
 
   // CVCRM import state
+  const [syncingPhones, setSyncingPhones] = useState(false);
   const [cvDialog, setCvDialog] = useState(false);
   const [selectedCvEmp, setSelectedCvEmp] = useState("");
   const [selectedLocalEmp, setSelectedLocalEmp] = useState("");
@@ -88,6 +89,50 @@ export default function Clientes() {
     if (empFiltro !== "todos" && (c as any).unidades?.empreendimentos?.nome !== empFiltro) return false;
     return true;
   });
+
+  // --- Sincronizar Telefones do CVCRM ---
+  const syncPhones = async () => {
+    setSyncingPhones(true);
+    let atualizados = 0; let semTelefone = 0;
+
+    try {
+      // Busca todos os clientes do banco local
+      const { data: todosClientes } = await supabase.from('clientes').select('id, cpf, telefone');
+      if (!todosClientes?.length) { toast.info('Nenhum cliente encontrado.'); return; }
+
+      const cpfs = todosClientes.map(c => c.cpf).filter(Boolean);
+
+      // Chama a Edge Function que busca telefone no CVCRM por CPF
+      const { data: result, error } = await supabase.functions.invoke('cv-crm-sync-phones', {
+        body: { cpfs },
+      });
+
+      if (error) throw new Error(error.message);
+
+      const resultMap = new Map<string, string | null>(
+        (result?.results ?? []).map((r: any) => [r.cpf, r.telefone])
+      );
+
+      // Atualiza clientes que têm telefone no CVCRM
+      for (const cliente of todosClientes) {
+        const tel = resultMap.get(cliente.cpf);
+        if (!tel) { semTelefone++; continue; }
+        if (cliente.telefone === tel) continue;
+        await supabase.from('clientes').update({ telefone: tel }).eq('id', cliente.id);
+        atualizados++;
+      }
+
+      toast.success(
+        `Sincronização concluída: ${atualizados} telefone${atualizados !== 1 ? 's' : ''} atualizados` +
+        (semTelefone > 0 ? `, ${semTelefone} sem telefone no CV` : '')
+      );
+      refetch();
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao sincronizar telefones');
+    } finally {
+      setSyncingPhones(false);
+    }
+  };
 
   // --- CSV Import ---
   const downloadTemplate = () => {
@@ -287,6 +332,12 @@ export default function Clientes() {
           <p className="text-sm text-muted-foreground">Gerencie os clientes vinculados às unidades</p>
         </div>
         <div className="flex gap-2">
+          {/* Sync Phones */}
+          <Button variant="outline" onClick={syncPhones} disabled={syncingPhones}>
+            <Phone className="mr-2 h-4 w-4" />
+            {syncingPhones ? "Sincronizando..." : "Sincronizar Telefones"}
+          </Button>
+
           {/* CVCRM Import */}
           <Dialog open={cvDialog} onOpenChange={v => { setCvDialog(v); if (!v) { setCvRows([]); setSelectedCvEmp(''); setSelectedLocalEmp(''); setLocalEmpNome(''); } }}>
             <DialogTrigger asChild>

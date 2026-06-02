@@ -32,7 +32,7 @@ export default function ClienteLogin() {
       <div
         className="absolute inset-0 scale-110"
         style={{
-          backgroundImage: "url('/fundo-login.jpg')",
+          backgroundImage: "url('/login-novo-fundo.jpg')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           filter: 'blur(6px)',

@@ -148,6 +148,9 @@ serve(async (req) => {
         documento_cliente:  r.documento_cliente,
         email:              r.email,
         idade:              r.idade,
+        telefone:           r.telefone ?? r.celular ?? r.fone ?? r.tel
+                            ?? r.celular_cliente ?? r.telefone_cliente
+                            ?? r.fone_cliente ?? null,
       });
     }
 
