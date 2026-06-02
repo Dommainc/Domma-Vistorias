@@ -45,7 +45,7 @@ export default function ClienteLayout() {
               className="flex h-9 w-9 items-center justify-center rounded-xl shadow-sm"
               style={{ background: "linear-gradient(135deg, #1a2744 0%, #1e3a5f 100%)" }}
             >
-              <Building2 className="h-4.5 w-4.5 text-white" />
+              <img src="/logo-domma.png" alt="Domma" className="h-5 w-5 object-contain" />
             </div>
             <div>
               <p className="text-sm font-heading font-bold text-foreground leading-none">Domma Vistorias</p>

@@ -71,7 +71,7 @@ export function AppSidebar() {
           {/* Logo mark */}
           <div className="relative flex-shrink-0">
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-sidebar-primary to-sidebar-primary/60 flex items-center justify-center shadow-lg shadow-sidebar-primary/20">
-              <Building2 className="h-4 w-4 text-white" strokeWidth={2} />
+              <img src="/logo-domma.png" alt="Domma" className="h-5 w-5 object-contain" />
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-sidebar-background" />
           </div>
