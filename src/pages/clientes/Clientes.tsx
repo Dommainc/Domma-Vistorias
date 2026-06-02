@@ -60,6 +60,7 @@ export default function Clientes() {
   const [cvDialog, setCvDialog] = useState(false);
   const [selectedCvEmp, setSelectedCvEmp] = useState("");
   const [selectedLocalEmp, setSelectedLocalEmp] = useState("");
+  const [localEmpNome, setLocalEmpNome] = useState("");
   const [cvRows, setCvRows] = useState<CVImportRow[]>([]);
   const [loadingCv, setLoadingCv] = useState(false);
   const [importingCv, setImportingCv] = useState(false);
@@ -151,8 +152,8 @@ export default function Clientes() {
 
   // --- CVCRM Import ---
   const fetchCvClientes = async () => {
-    if (!selectedCvEmp || !selectedLocalEmp) {
-      toast.error("Selecione o empreendimento do CV e o local"); return;
+    if (!selectedCvEmp) {
+      toast.error("Selecione o empreendimento do CVCRM"); return;
     }
     setLoadingCv(true);
     setCvRows([]);
@@ -168,6 +169,18 @@ export default function Clientes() {
       // Usa parseMapa para normalizar blocos (igual ao mapa de disponibilidade)
       const parsed = parseMapa(mapaRes.data, selectedCvEmp);
 
+      // Auto-match empreendimento local pelo nome do CV
+      const cvEmpNome = EMPREENDIMENTOS_CVCRM.find(e => e.id === selectedCvEmp)?.nome ?? '';
+      const { data: empMatch } = await supabase.from('empreendimentos')
+        .select('id, nome').ilike('nome', `%${cvEmpNome}%`).eq('ativo', true).limit(1);
+      if (!empMatch || empMatch.length === 0) {
+        toast.error(`Nenhum empreendimento local encontrado para "${cvEmpNome}". Verifique se o nome bate.`);
+        return;
+      }
+      const localEmpId = empMatch[0].id;
+      setSelectedLocalEmp(localEmpId);
+      setLocalEmpNome(empMatch[0].nome);
+
       // Build CV unit map: idunidade → {numero (limpo), bloco (normalizado)}
       // Remove prefixo "APT"/"APTO" que o CVCRM inclui (ex: "APT 402" → "402")
       const cleanNum = (n: string) => n.replace(/^APT[O]?\s+/i, '').trim();
@@ -180,7 +193,7 @@ export default function Clientes() {
 
       // Get local units — lookup por normBloco::numero
       const { data: localUnidades } = await supabase.from('unidades')
-        .select('id, numero, bloco').eq('empreendimento_id', selectedLocalEmp);
+        .select('id, numero, bloco').eq('empreendimento_id', localEmpId);
 
       const localLookup = new Map<string, string>();
       for (const u of localUnidades ?? []) {
@@ -275,39 +288,29 @@ export default function Clientes() {
         </div>
         <div className="flex gap-2">
           {/* CVCRM Import */}
-          <Dialog open={cvDialog} onOpenChange={v => { setCvDialog(v); if (!v) { setCvRows([]); setSelectedCvEmp(''); setSelectedLocalEmp(''); } }}>
+          <Dialog open={cvDialog} onOpenChange={v => { setCvDialog(v); if (!v) { setCvRows([]); setSelectedCvEmp(''); setSelectedLocalEmp(''); setLocalEmpNome(''); } }}>
             <DialogTrigger asChild>
               <Button variant="outline"><RefreshCw className="mr-2 h-4 w-4" /> Importar do CVCRM</Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Importar Clientes do CVCRM</DialogTitle></DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Empreendimento no CVCRM</label>
-                    <Select value={selectedCvEmp} onValueChange={setSelectedCvEmp}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {EMPREENDIMENTOS_CVCRM.map(e => (
-                          <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Empreendimento local</label>
-                    <Select value={selectedLocalEmp} onValueChange={setSelectedLocalEmp}>
-                      <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                      <SelectContent>
-                        {empreendimentos?.map((e: any) => (
-                          <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Empreendimento no CVCRM</label>
+                  <Select value={selectedCvEmp} onValueChange={v => { setSelectedCvEmp(v); setCvRows([]); setLocalEmpNome(""); }}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {EMPREENDIMENTOS_CVCRM.map(e => (
+                        <SelectItem key={e.id} value={e.id}>{e.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {localEmpNome && (
+                    <p className="text-xs text-muted-foreground">Empreendimento local encontrado: <strong>{localEmpNome}</strong></p>
+                  )}
                 </div>
 
-                <Button onClick={fetchCvClientes} disabled={loadingCv || !selectedCvEmp || !selectedLocalEmp} className="w-full">
+                <Button onClick={fetchCvClientes} disabled={loadingCv || !selectedCvEmp} className="w-full">
                   {loadingCv ? "Buscando..." : "Buscar clientes do CVCRM"}
                 </Button>
 

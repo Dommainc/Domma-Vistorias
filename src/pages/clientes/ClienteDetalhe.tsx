@@ -151,30 +151,6 @@ export default function ClienteDetalhe() {
               <Pencil className="mr-1 h-3 w-3" /> Editar
             </Button>
           )}
-          {profile?.perfil === 'admin' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm"><Trash2 className="mr-1 h-3 w-3" /> Excluir</Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Excluir Cliente</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {hasAgendamentoAtivo
-                      ? "Cancele a vistoria agendada antes de excluir o cliente."
-                      : `Tem certeza que deseja excluir ${cliente.nome_completo}?`
-                    }
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  {!hasAgendamentoAtivo && (
-                    <AlertDialogAction onClick={handleDeleteCliente}>Confirmar Exclusão</AlertDialogAction>
-                  )}
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </div>
       </div>
 

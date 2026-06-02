@@ -27,10 +27,20 @@ export default function ClienteLogin() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12"
-      style={{ background: "linear-gradient(160deg, #0d1829 0%, #1a2744 50%, #1e3a5f 100%)" }}
-    >
-      <div className="w-full max-w-sm animate-slide-up">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-12 overflow-hidden">
+      {/* Foto de fundo borrada */}
+      <div
+        className="absolute inset-0 scale-110"
+        style={{
+          backgroundImage: "url('/fundo-login.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'blur(6px)',
+        }}
+      />
+      {/* Overlay escuro para legibilidade */}
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="relative z-10 w-full max-w-sm animate-slide-up">
         <div className="flex flex-col items-center mb-8 text-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 border border-white/20 mb-4">
             <Building2 className="h-8 w-8 text-white" />
