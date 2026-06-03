@@ -39,7 +39,7 @@ export default function ClienteLayout() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card shadow-sm">
-        <div className="px-6 py-3 flex items-center justify-between">
+        <div className="px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               className="flex h-9 w-9 items-center justify-center rounded-xl shadow-sm"
@@ -96,7 +96,7 @@ export default function ClienteLayout() {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 w-full px-6 py-6 pb-28 md:pb-8">
+        <main className="flex-1 w-full px-4 py-5 pb-24 md:pb-8">
           <Outlet />
         </main>
       </div>
@@ -109,7 +109,7 @@ export default function ClienteLayout() {
               key={item.path}
               onClick={() => navigate(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 h-full text-[11px] font-medium transition-colors",
+                "flex flex-col items-center justify-center gap-1 flex-1 h-full text-xs font-medium transition-colors",
                 isActive(item.path)
                   ? "text-primary"
                   : "text-muted-foreground"

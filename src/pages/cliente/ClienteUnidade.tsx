@@ -26,7 +26,7 @@ export default function ClienteUnidade() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
+      <h1 className="font-heading text-xl sm:text-2xl font-bold flex items-center gap-2">
         <Building2 className="h-6 w-6" /> Minha Unidade
       </h1>
 

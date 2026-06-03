@@ -19,7 +19,15 @@ export default function Dashboard() {
 
   const hora = today.getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-  const primeiroNome = profile?.nome?.split(' ')[0] ?? '';
+  const primeiroNome = (() => {
+    const nome = profile?.nome ?? '';
+    if (!nome) return '';
+    if (nome.includes('@')) {
+      const part = nome.split('@')[0].split('.')[0];
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }
+    return nome.split(' ')[0];
+  })();
   const dataFormatada = format(today, "EEEE',' d 'de' MMMM", { locale: ptBR });
 
   const { data: agendamentosHoje } = useQuery({

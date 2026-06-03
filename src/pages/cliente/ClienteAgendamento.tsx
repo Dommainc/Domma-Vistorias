@@ -307,7 +307,7 @@ export default function ClienteAgendamento() {
             ) : slots.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">Nenhum horário disponível para esta data.</p>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {slots.map(s => (
                   <Button
                     key={s.hora}

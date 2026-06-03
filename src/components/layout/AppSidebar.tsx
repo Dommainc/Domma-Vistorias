@@ -58,10 +58,19 @@ export function AppSidebar() {
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  // Initials for avatar
-  const initials = profile?.nome
-    ? profile.nome.split(" ").slice(0, 2).map((n: string) => n[0]).join("").toUpperCase()
-    : "?";
+  const nomeDisplay = (() => {
+    const nome = profile?.nome ?? '';
+    if (!nome) return '';
+    if (nome.includes('@')) {
+      const part = nome.split('@')[0].split('.')[0];
+      return part.charAt(0).toUpperCase() + part.slice(1);
+    }
+    return nome;
+  })();
+
+  const initials = nomeDisplay
+    ? nomeDisplay.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase()
+    : '?';
 
   return (
     <Sidebar collapsible="icon">
@@ -190,7 +199,7 @@ export function AppSidebar() {
               <span className="text-[10px] font-bold text-sidebar-primary">{initials}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-medium text-white truncate leading-none">{profile.nome}</p>
+              <p className="text-xs font-medium text-white truncate leading-none">{nomeDisplay || profile.nome}</p>
               <p className="text-[10px] text-sidebar-foreground/40 truncate mt-0.5">{perfilLabel}</p>
             </div>
           </div>
